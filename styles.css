@@ -78,6 +78,29 @@ button {
   transform-origin: center;
 }
 
+.camera.has-photo .scene {
+  background-image: var(--photo);
+  background-position: center;
+  background-size: cover;
+  transform: none;
+}
+
+.camera.has-photo .sky,
+.camera.has-photo .ground,
+.camera.has-photo .roof,
+.camera.has-photo .window,
+.camera.has-photo .door {
+  display: none;
+}
+
+.camera.has-photo .wall {
+  inset: 0;
+  height: auto;
+  border: 0;
+  background: linear-gradient(180deg, rgba(16, 22, 19, 0.02), rgba(16, 22, 19, 0.1));
+  box-shadow: none;
+}
+
 .sky,
 .ground {
   position: absolute;
@@ -254,6 +277,14 @@ button {
 .controls {
   min-height: 86px;
   padding: 14px 34px;
+}
+
+.photo-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .icon-button,

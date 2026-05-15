@@ -5,7 +5,8 @@ const state = {
   angle: 24,
   distance: 18,
   width: 183,
-  height: 111
+  height: 111,
+  photo: ""
 };
 
 const inputs = {
@@ -25,6 +26,7 @@ const readoutSize = document.getElementById("readoutSize");
 const readoutArea = document.getElementById("readoutArea");
 const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
+const photoInput = document.getElementById("photoInput");
 const stepButtons = document.querySelectorAll("[data-step]");
 const stepLabels = document.querySelectorAll("[data-step-label]");
 
@@ -63,6 +65,12 @@ function setStep(step) {
   render();
 }
 
+function openPhotoPicker(nextStep = "calibrate") {
+  state.step = nextStep;
+  render();
+  photoInput.click();
+}
+
 function readInputs() {
   Object.keys(inputs).forEach((key) => {
     state[key] = Number(inputs[key].value) || 0;
@@ -77,6 +85,12 @@ function render() {
   const confidenceState = confidenceForAngle();
 
   camera.className = `camera ${state.step}`;
+  camera.classList.toggle("has-photo", Boolean(state.photo));
+  if (state.photo) {
+    camera.style.setProperty("--photo", `url("${state.photo}")`);
+  } else {
+    camera.style.removeProperty("--photo");
+  }
   scene.style.setProperty("--scene-angle", `${sceneAngle}deg`);
 
   stepButtons.forEach((button) => {
@@ -104,7 +118,26 @@ Object.values(inputs).forEach((input) => {
 });
 
 stepButtons.forEach((button) => {
-  button.addEventListener("click", () => setStep(button.dataset.step));
+  button.addEventListener("click", () => {
+    if (button.classList.contains("shutter") || button.dataset.step === "photo") {
+      openPhotoPicker(button.classList.contains("shutter") ? "calibrate" : "photo");
+      return;
+    }
+    setStep(button.dataset.step);
+  });
+});
+
+photoInput.addEventListener("change", () => {
+  const file = photoInput.files && photoInput.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    state.photo = String(reader.result || "");
+    state.step = "calibrate";
+    render();
+  });
+  reader.readAsDataURL(file);
 });
 
 render();
