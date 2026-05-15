@@ -42,11 +42,15 @@
         </div>
 
         <div class="controls">
-          <button class="icon-button" id="photoButton" type="button" aria-label="Take or upload photo">+</button>
-          <button class="shutter" id="shutterButton" type="button" aria-label="Take photo"></button>
+          <label class="icon-button file-control" aria-label="Upload photo">
+            +
+            <input id="uploadInput" type="file" accept="image/*" />
+          </label>
+          <label class="shutter file-control" aria-label="Take photo">
+            <input id="cameraInput" type="file" accept="image/*" capture="environment" />
+          </label>
           <button class="icon-button" id="measureButton" type="button" aria-label="Outline measurement">M</button>
         </div>
-        <input id="photoInput" class="photo-input" type="file" accept="image/*" capture="environment" />
       </section>
 
       <section class="panel">

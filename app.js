@@ -46,9 +46,8 @@ const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
 const statusLabel = document.getElementById("statusLabel");
 const cameraHint = document.getElementById("cameraHint");
-const photoInput = document.getElementById("photoInput");
-const photoButton = document.getElementById("photoButton");
-const shutterButton = document.getElementById("shutterButton");
+const uploadInput = document.getElementById("uploadInput");
+const cameraInput = document.getElementById("cameraInput");
 const measureButton = document.getElementById("measureButton");
 const resultButton = document.getElementById("resultButton");
 const resetButton = document.getElementById("resetButton");
@@ -74,12 +73,6 @@ function resetHandles() {
 function setStep(step) {
   state.step = step;
   render();
-}
-
-function openPhotoPicker(nextStep = "calibrate") {
-  state.step = nextStep;
-  render();
-  photoInput.click();
 }
 
 function readInputs() {
@@ -324,14 +317,12 @@ stepButtons.forEach((button) => {
   button.addEventListener("click", () => setStep(button.dataset.step));
 });
 
-photoButton.addEventListener("click", () => openPhotoPicker("photo"));
-shutterButton.addEventListener("click", () => openPhotoPicker("calibrate"));
 measureButton.addEventListener("click", () => setStep("outline"));
 resultButton.addEventListener("click", () => setStep("result"));
 resetButton.addEventListener("click", resetHandles);
 
-photoInput.addEventListener("change", () => {
-  const file = photoInput.files && photoInput.files[0];
+function loadSelectedPhoto(input) {
+  const file = input.files && input.files[0];
   if (!file) return;
 
   if (state.photoUrl) URL.revokeObjectURL(state.photoUrl);
@@ -339,7 +330,13 @@ photoInput.addEventListener("change", () => {
   state.photoUrl = URL.createObjectURL(file);
   state.step = "calibrate";
   render();
-});
+  input.value = "";
+}
+
+uploadInput.addEventListener("click", () => setStep("photo"));
+cameraInput.addEventListener("click", () => setStep("photo"));
+uploadInput.addEventListener("change", () => loadSelectedPhoto(uploadInput));
+cameraInput.addEventListener("change", () => loadSelectedPhoto(cameraInput));
 
 overlay.addEventListener("pointerdown", (event) => {
   const handle = event.target.closest(".handle");
