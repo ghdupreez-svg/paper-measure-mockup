@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Paper Measure Mockup</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="phone" aria-label="Camera mockup">
+        <div class="status">
+          <span>9:41</span>
+          <span>Measure</span>
+        </div>
+        <div class="camera" id="camera">
+          <div class="scene" id="scene">
+            <div class="sky"></div>
+            <div class="wall">
+              <div class="roof"></div>
+              <div class="window left"></div>
+              <div class="window right"></div>
+              <div class="door"></div>
+              <button class="paper active" id="paper" type="button">
+                <span>8.5 x 11</span>
+              </button>
+              <button class="target" id="target" type="button">
+                <span>Selected wall area</span>
+              </button>
+            </div>
+            <div class="ground"></div>
+          </div>
+          <div class="scan-lines">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="readout">
+            <strong id="readoutSize">15.25 ft x 9.25 ft</strong>
+            <span id="readoutArea">141.1 sq ft estimated</span>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="icon-button" type="button" data-step="photo">+</button>
+          <button class="shutter" type="button" data-step="calibrate" aria-label="Capture"></button>
+          <button class="icon-button" type="button" data-step="outline">M</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="header">
+          <p>Paper-calibrated measurement</p>
+          <h1>Measure a wall from a photo using a taped 8.5 x 11 sheet.</h1>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button class="active" type="button" data-step="photo">Photo</button>
+          <button type="button" data-step="calibrate">Calibrate</button>
+          <button type="button" data-step="outline">Outline</button>
+          <button type="button" data-step="result">Result</button>
+        </div>
+
+        <section class="card">
+          <div class="card-head">
+            <strong>Workflow</strong>
+            <span class="badge" id="confidence">Medium confidence</span>
+          </div>
+          <ol class="steps">
+            <li data-step-label="photo">Take a photo with the paper taped flat to the wall.</li>
+            <li data-step-label="calibrate">Tap the four paper corners so the app knows the scale.</li>
+            <li data-step-label="outline">Outline the surface or repair area you want measured.</li>
+            <li data-step-label="result">Review the estimate and confidence note.</li>
+          </ol>
+          <p id="confidenceNote">Perspective correction is needed because the camera is angled.</p>
+        </section>
+
+        <section class="grid">
+          <label>
+            Paper width, inches
+            <input id="paperWidth" type="number" value="8.5" step="0.1" />
+          </label>
+          <label>
+            Paper height, inches
+            <input id="paperHeight" type="number" value="11" step="0.1" />
+          </label>
+          <label>
+            Camera angle estimate
+            <input id="angle" type="range" value="24" min="-45" max="45" />
+          </label>
+          <label>
+            Distance from wall, feet
+            <input id="distance" type="number" value="18" step="1" />
+          </label>
+          <label>
+            Estimated width, inches
+            <input id="width" type="number" value="183" step="1" />
+          </label>
+          <label>
+            Estimated height, inches
+            <input id="height" type="number" value="111" step="1" />
+          </label>
+        </section>
+
+        <section class="result">
+          <span>Selected area</span>
+          <strong id="resultSize">15.25 ft wide by 9.25 ft high</strong>
+          <p id="resultArea">141.06 square feet. Distance is supporting context; same-plane paper calibration drives the scale.</p>
+        </section>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
