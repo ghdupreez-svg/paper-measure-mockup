@@ -7,6 +7,7 @@ const state = {
   angle: 24,
   distance: 18,
   photo: "",
+  photoUrl: "",
   dragging: null,
   paper: [
     { x: 625, y: 470 },
@@ -31,6 +32,7 @@ const inputs = {
 
 const camera = document.getElementById("camera");
 const scene = document.getElementById("scene");
+const photoPreview = document.getElementById("photoPreview");
 const overlay = document.getElementById("overlay");
 const paperPoly = document.getElementById("paperPoly");
 const targetPoly = document.getElementById("targetPoly");
@@ -266,11 +268,12 @@ function render() {
   const confidenceState = confidenceForMeasurement(measurement);
 
   camera.className = `camera ${state.step}`;
-  camera.classList.toggle("has-photo", Boolean(state.photo));
-  if (state.photo) {
-    camera.style.setProperty("--photo", `url("${state.photo}")`);
+  camera.classList.toggle("has-photo", Boolean(state.photoUrl));
+  if (state.photoUrl) {
+    if (photoPreview.src !== state.photoUrl) photoPreview.src = state.photoUrl;
+    photoPreview.alt = "Selected measurement photo";
   } else {
-    camera.style.removeProperty("--photo");
+    photoPreview.removeAttribute("src");
   }
   scene.style.setProperty("--scene-angle", `${sceneAngle}deg`);
 
@@ -331,13 +334,11 @@ photoInput.addEventListener("change", () => {
   const file = photoInput.files && photoInput.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.addEventListener("load", () => {
-    state.photo = String(reader.result || "");
-    state.step = "calibrate";
-    render();
-  });
-  reader.readAsDataURL(file);
+  if (state.photoUrl) URL.revokeObjectURL(state.photoUrl);
+  state.photo = file.name || "Selected photo";
+  state.photoUrl = URL.createObjectURL(file);
+  state.step = "calibrate";
+  render();
 });
 
 overlay.addEventListener("pointerdown", (event) => {

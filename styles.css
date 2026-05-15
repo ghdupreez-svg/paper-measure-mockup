@@ -73,9 +73,23 @@ button {
 }
 
 .scene,
-.overlay {
+.overlay,
+.photo-preview {
   position: absolute;
   inset: 0;
+}
+
+.photo-preview {
+  z-index: 1;
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #101613;
+}
+
+.camera.has-photo .photo-preview {
+  display: block;
 }
 
 .scene {
@@ -84,26 +98,7 @@ button {
 }
 
 .camera.has-photo .scene {
-  background-image: var(--photo);
-  background-position: center;
-  background-size: cover;
-  transform: none;
-}
-
-.camera.has-photo .sky,
-.camera.has-photo .ground,
-.camera.has-photo .roof,
-.camera.has-photo .window,
-.camera.has-photo .door {
   display: none;
-}
-
-.camera.has-photo .wall {
-  inset: 0;
-  height: auto;
-  border: 0;
-  background: linear-gradient(180deg, rgba(16, 22, 19, 0.02), rgba(16, 22, 19, 0.18));
-  box-shadow: none;
 }
 
 .sky,
