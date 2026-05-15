@@ -8,6 +8,7 @@ const state = {
   distance: 18,
   photo: "",
   photoUrl: "",
+  photoStatus: "",
   dragging: null,
   paper: [
     { x: 625, y: 470 },
@@ -285,9 +286,9 @@ function render() {
   confidence.className = `badge ${confidenceState.className}`;
   confidenceNote.textContent = confidenceState.note;
   statusLabel.textContent = state.step === "photo" ? "Take photo" : state.step === "outline" ? "Outline area" : state.step === "result" ? "Result" : "Calibrate paper";
-  cameraHint.textContent = state.step === "outline"
+  cameraHint.textContent = state.photoStatus || (state.step === "outline"
     ? "Drag the gold corners around the area you want measured."
-    : "Drag the green corners onto the exact paper corners.";
+    : "Drag the green corners onto the exact paper corners.");
 
   if (!measurement) {
     readoutSize.textContent = "--";
@@ -323,13 +324,28 @@ resetButton.addEventListener("click", resetHandles);
 
 function loadSelectedPhoto(input) {
   const file = input.files && input.files[0];
-  if (!file) return;
+  if (!file) {
+    state.photoStatus = "No photo was returned. Try the + button to select from your library.";
+    render();
+    return;
+  }
 
-  if (state.photoUrl) URL.revokeObjectURL(state.photoUrl);
-  state.photo = file.name || "Selected photo";
-  state.photoUrl = URL.createObjectURL(file);
-  state.step = "calibrate";
+  state.photoStatus = `Loading ${file.name || "photo"}...`;
   render();
+
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    state.photo = file.name || "Selected photo";
+    state.photoUrl = String(reader.result || "");
+    state.photoStatus = "Photo ready. Drag the green corners to the paper.";
+    state.step = "calibrate";
+    render();
+  });
+  reader.addEventListener("error", () => {
+    state.photoStatus = "The browser could not read that image. Try taking another photo or selecting a JPEG/PNG.";
+    render();
+  });
+  reader.readAsDataURL(file);
   input.value = "";
 }
 
@@ -337,6 +353,17 @@ uploadInput.addEventListener("click", () => setStep("photo"));
 cameraInput.addEventListener("click", () => setStep("photo"));
 uploadInput.addEventListener("change", () => loadSelectedPhoto(uploadInput));
 cameraInput.addEventListener("change", () => loadSelectedPhoto(cameraInput));
+
+photoPreview.addEventListener("load", () => {
+  state.photoStatus = "Photo ready. Drag the green corners to the paper.";
+  render();
+});
+
+photoPreview.addEventListener("error", () => {
+  state.photoStatus = "The image was received but could not be displayed. Try a JPEG/PNG photo.";
+  state.photoUrl = "";
+  render();
+});
 
 overlay.addEventListener("pointerdown", (event) => {
   const handle = event.target.closest(".handle");
