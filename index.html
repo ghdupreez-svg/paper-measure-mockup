@@ -8,11 +8,12 @@
   </head>
   <body>
     <main class="app">
-      <section class="phone" aria-label="Camera mockup">
+      <section class="phone" aria-label="Measurement camera">
         <div class="status">
           <span>9:41</span>
-          <span>Measure</span>
+          <span id="statusLabel">Calibrate paper</span>
         </div>
+
         <div class="camera" id="camera">
           <div class="scene" id="scene">
             <div class="sky"></div>
@@ -21,30 +22,28 @@
               <div class="window left"></div>
               <div class="window right"></div>
               <div class="door"></div>
-              <button class="paper active" id="paper" type="button">
-                <span>8.5 x 11</span>
-              </button>
-              <button class="target" id="target" type="button">
-                <span>Selected wall area</span>
-              </button>
             </div>
             <div class="ground"></div>
           </div>
-          <div class="scan-lines">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
+
+          <svg id="overlay" class="overlay" viewBox="0 0 1000 1000" aria-label="Measurement overlay">
+            <polygon id="targetPoly" class="target-poly" points=""></polygon>
+            <polygon id="paperPoly" class="paper-poly" points=""></polygon>
+            <g id="targetHandles"></g>
+            <g id="paperHandles"></g>
+          </svg>
+
+          <div class="hint" id="cameraHint">Take or upload a photo, then drag the paper corners onto the sheet.</div>
           <div class="readout">
-            <strong id="readoutSize">15.25 ft x 9.25 ft</strong>
-            <span id="readoutArea">141.1 sq ft estimated</span>
+            <strong id="readoutSize">--</strong>
+            <span id="readoutArea">Waiting for calibration</span>
           </div>
         </div>
+
         <div class="controls">
-          <button class="icon-button" type="button" data-step="photo">+</button>
-          <button class="shutter" type="button" data-step="calibrate" aria-label="Capture"></button>
-          <button class="icon-button" type="button" data-step="outline">M</button>
+          <button class="icon-button" id="photoButton" type="button" aria-label="Take or upload photo">+</button>
+          <button class="shutter" id="shutterButton" type="button" aria-label="Take photo"></button>
+          <button class="icon-button" id="measureButton" type="button" aria-label="Outline measurement">M</button>
         </div>
         <input id="photoInput" class="photo-input" type="file" accept="image/*" capture="environment" />
       </section>
@@ -52,7 +51,7 @@
       <section class="panel">
         <div class="header">
           <p>Paper-calibrated measurement</p>
-          <h1>Measure a wall from a photo using a taped 8.5 x 11 sheet.</h1>
+          <h1>Test wall measurements with a real photo and an 8.5 x 11 sheet.</h1>
         </div>
 
         <div class="tabs" role="tablist">
@@ -65,49 +64,46 @@
         <section class="card">
           <div class="card-head">
             <strong>Workflow</strong>
-            <span class="badge" id="confidence">Medium confidence</span>
+            <span class="badge" id="confidence">Ready</span>
           </div>
           <ol class="steps">
-            <li data-step-label="photo">Take a photo with the paper taped flat to the wall.</li>
-            <li data-step-label="calibrate">Tap the four paper corners so the app knows the scale.</li>
-            <li data-step-label="outline">Outline the surface or repair area you want measured.</li>
-            <li data-step-label="result">Review the estimate and confidence note.</li>
+            <li data-step-label="photo">Take or upload a photo with the paper taped flat to the wall.</li>
+            <li data-step-label="calibrate">Drag the green handles to the four paper corners.</li>
+            <li data-step-label="outline">Drag the gold handles around the area to measure.</li>
+            <li data-step-label="result">Review the perspective-corrected estimate.</li>
           </ol>
-          <p id="confidenceNote">Perspective correction is needed because the camera is angled.</p>
+          <p id="confidenceNote">The paper must be on the same flat surface as the area you measure.</p>
         </section>
 
         <section class="grid">
           <label>
             Paper width, inches
-            <input id="paperWidth" type="number" value="8.5" step="0.1" />
+            <input id="paperWidth" type="number" value="8.5" step="0.1" min="1" />
           </label>
           <label>
             Paper height, inches
-            <input id="paperHeight" type="number" value="11" step="0.1" />
-          </label>
-          <label>
-            Camera angle estimate
-            <input id="angle" type="range" value="24" min="-45" max="45" />
+            <input id="paperHeight" type="number" value="11" step="0.1" min="1" />
           </label>
           <label>
             Distance from wall, feet
-            <input id="distance" type="number" value="18" step="1" />
+            <input id="distance" type="number" value="18" step="1" min="0" />
           </label>
           <label>
-            Estimated width, inches
-            <input id="width" type="number" value="183" step="1" />
-          </label>
-          <label>
-            Estimated height, inches
-            <input id="height" type="number" value="111" step="1" />
+            Camera angle note
+            <input id="angle" type="range" value="24" min="-45" max="45" />
           </label>
         </section>
 
         <section class="result">
           <span>Selected area</span>
-          <strong id="resultSize">15.25 ft wide by 9.25 ft high</strong>
-          <p id="resultArea">141.06 square feet. Distance is supporting context; same-plane paper calibration drives the scale.</p>
+          <strong id="resultSize">Waiting for target outline</strong>
+          <p id="resultArea">Use the green paper handles first, then set the gold measurement handles.</p>
         </section>
+
+        <div class="action-row">
+          <button class="secondary" id="resetButton" type="button">Reset handles</button>
+          <button class="primary" id="resultButton" type="button">Calculate estimate</button>
+        </div>
       </section>
     </main>
     <script src="app.js"></script>
