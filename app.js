@@ -47,6 +47,7 @@ const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
 const statusLabel = document.getElementById("statusLabel");
 const cameraHint = document.getElementById("cameraHint");
+const debugLine = document.getElementById("debugLine");
 const uploadInput = document.getElementById("uploadInput");
 const cameraInput = document.getElementById("cameraInput");
 const measureButton = document.getElementById("measureButton");
@@ -289,6 +290,7 @@ function render() {
   cameraHint.textContent = state.photoStatus || (state.step === "outline"
     ? "Drag the gold corners around the area you want measured."
     : "Drag the green corners onto the exact paper corners.");
+  debugLine.textContent = state.photoStatus || (state.photo ? `Loaded ${state.photo}` : "No photo selected yet.");
 
   if (!measurement) {
     readoutSize.textContent = "--";
@@ -330,7 +332,7 @@ function loadSelectedPhoto(input) {
     return;
   }
 
-  state.photoStatus = `Loading ${file.name || "photo"}...`;
+  state.photoStatus = `Loading ${file.name || "photo"} (${Math.round(file.size / 1024)} KB, ${file.type || "unknown type"})...`;
   render();
 
   const reader = new FileReader();
