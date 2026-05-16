@@ -180,8 +180,8 @@ button {
 }
 
 .paper-poly {
-  fill: rgba(223, 240, 231, 0.26);
-  stroke: #9af0c7;
+  fill: rgba(154, 240, 199, 0.08);
+  stroke: rgba(48, 184, 129, 0.92);
   cursor: move;
 }
 
@@ -209,7 +209,7 @@ button {
 }
 
 .paper-handle {
-  fill: #9af0c7;
+  fill: rgba(154, 240, 199, 0.72);
 }
 
 .target-handle {
@@ -240,7 +240,7 @@ button {
 }
 
 .paper-edge-handle {
-  fill: #9af0c7;
+  fill: rgba(154, 240, 199, 0.72);
 }
 
 .edge-left,

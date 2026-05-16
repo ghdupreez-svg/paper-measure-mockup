@@ -753,7 +753,7 @@ function render() {
   const frame = getPhotoFrame();
   const paperBox = boundingBox(state.paper);
   const paperMinSide = Math.min(paperBox.maxX - paperBox.minX, paperBox.maxY - paperBox.minY);
-  const paperStroke = Math.max(3, Math.min(7, paperMinSide / 18));
+  const paperStroke = Math.max(1.5, Math.min(3.5, paperMinSide / 38));
 
   camera.className = `camera ${state.step}`;
   camera.classList.toggle("has-photo", Boolean(state.photoUrl));
