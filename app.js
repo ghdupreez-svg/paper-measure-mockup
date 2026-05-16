@@ -509,7 +509,7 @@ function makeHandle(group, kind, point, index) {
   const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
   circle.setAttribute("cx", point.x);
   circle.setAttribute("cy", point.y);
-  circle.setAttribute("r", kind === "paper" ? 14 : 13);
+  circle.setAttribute("r", kind === "paper" ? 7 : 13);
   circle.setAttribute("class", `handle ${kind}-handle ${state.selectedKind === kind && state.selectedIndex === index ? "selected-handle" : ""}`);
   circle.dataset.kind = kind;
   circle.dataset.index = index;
@@ -524,22 +524,26 @@ function makeHandle(group, kind, point, index) {
   touch.dataset.index = index;
   group.appendChild(touch);
 
-  const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  label.setAttribute("x", point.x);
-  label.setAttribute("y", point.y + 6);
-  label.setAttribute("class", "handle-label");
-  label.textContent = index + 1;
-  group.appendChild(label);
+  if (kind !== "paper") {
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", point.x);
+    label.setAttribute("y", point.y + 6);
+    label.setAttribute("class", "handle-label");
+    label.textContent = index + 1;
+    group.appendChild(label);
+  }
 }
 
 function makeEdgeHandle(group, edge, point) {
-  const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-  rect.setAttribute("x", point.x - 26);
-  rect.setAttribute("y", point.y - 13);
-  rect.setAttribute("width", 52);
-  rect.setAttribute("height", 26);
-  rect.setAttribute("rx", 9);
   const kind = group === paperHandles ? "paper" : "target";
+  const width = kind === "paper" ? 34 : 52;
+  const height = kind === "paper" ? 14 : 26;
+  const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  rect.setAttribute("x", point.x - width / 2);
+  rect.setAttribute("y", point.y - height / 2);
+  rect.setAttribute("width", width);
+  rect.setAttribute("height", height);
+  rect.setAttribute("rx", kind === "paper" ? 5 : 9);
   rect.setAttribute("class", `edge-handle ${kind}-edge-handle edge-${edge}`);
   rect.dataset.kind = kind;
   rect.dataset.edge = edge;

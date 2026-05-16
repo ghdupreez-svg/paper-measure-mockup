@@ -209,7 +209,9 @@ button {
 }
 
 .paper-handle {
-  fill: rgba(154, 240, 199, 0.72);
+  fill: rgba(154, 240, 199, 0.55);
+  stroke: rgba(16, 22, 19, 0.55);
+  stroke-width: 2;
 }
 
 .target-handle {
@@ -240,7 +242,9 @@ button {
 }
 
 .paper-edge-handle {
-  fill: rgba(154, 240, 199, 0.72);
+  fill: rgba(154, 240, 199, 0.24);
+  stroke: rgba(16, 22, 19, 0.42);
+  stroke-width: 2;
 }
 
 .edge-left,
