@@ -306,73 +306,82 @@ function measurementToImage(point) {
 }
 
 function applyStandardShape(mode) {
-  const measurement = measureTarget();
-
-  const widthInches = toInches(state.shapeWidth, state.inputUnit);
-  const heightInches = mode === "square" ? widthInches : toInches(state.shapeHeight, state.inputUnit);
+  const widthValue = Math.max(1, state.shapeWidth);
+  const heightValue = mode === "square" ? widthValue : Math.max(1, state.shapeHeight);
   if (mode === "square") {
     state.shapeHeight = state.shapeWidth;
     inputs.shapeHeight.value = state.shapeHeight;
   }
 
-  let center = { x: 0, y: 0 };
-  if (measurement) {
-    const mapped = state.target.map((point) => applyHomography(homographyFromPaper(), point));
-    center = mapped.reduce((acc, point) => ({ x: acc.x + point.x / 4, y: acc.y + point.y / 4 }), center);
-  } else {
-    center = { x: widthInches / 2, y: heightInches / 2 };
+  const box = boundingBox(state.target);
+  const center = {
+    x: (box.minX + box.maxX) / 2,
+    y: (box.minY + box.maxY) / 2
+  };
+  const currentWidth = Math.max(90, box.maxX - box.minX);
+  const currentHeight = Math.max(90, box.maxY - box.minY);
+  const aspect = heightValue / widthValue;
+  let screenWidth = currentWidth;
+  let screenHeight = mode === "square" ? currentWidth : currentWidth * aspect;
+
+  if (screenHeight > VIEW_SIZE * 0.7) {
+    screenHeight = Math.min(currentHeight, VIEW_SIZE * 0.7);
+    screenWidth = mode === "square" ? screenHeight : screenHeight / aspect;
   }
 
-  const targetInches = [
-    { x: center.x - widthInches / 2, y: center.y - heightInches / 2 },
-    { x: center.x + widthInches / 2, y: center.y - heightInches / 2 },
-    { x: center.x + widthInches / 2, y: center.y + heightInches / 2 },
-    { x: center.x - widthInches / 2, y: center.y + heightInches / 2 }
-  ];
+  state.target = rectangleFromBounds(
+    center.x - screenWidth / 2,
+    center.y - screenHeight / 2,
+    center.x + screenWidth / 2,
+    center.y + screenHeight / 2
+  );
 
-  const nextTarget = targetInches.map(measurementToImage);
-  if (nextTarget.some((point) => !point || !Number.isFinite(point.x) || !Number.isFinite(point.y))) return;
-  state.target = nextTarget;
   state.step = "outline";
   render();
 }
 
+function boundingBox(points) {
+  return points.reduce((box, point) => ({
+    minX: Math.min(box.minX, point.x),
+    minY: Math.min(box.minY, point.y),
+    maxX: Math.max(box.maxX, point.x),
+    maxY: Math.max(box.maxY, point.y)
+  }), {
+    minX: Number.POSITIVE_INFINITY,
+    minY: Number.POSITIVE_INFINITY,
+    maxX: Number.NEGATIVE_INFINITY,
+    maxY: Number.NEGATIVE_INFINITY
+  });
+}
+
+function rectangleFromBounds(x1, y1, x2, y2) {
+  const left = Math.max(0, Math.min(x1, x2));
+  const right = Math.min(VIEW_SIZE, Math.max(x1, x2));
+  const top = Math.max(0, Math.min(y1, y2));
+  const bottom = Math.min(VIEW_SIZE, Math.max(y1, y2));
+  return [
+    { x: left, y: top },
+    { x: right, y: top },
+    { x: right, y: bottom },
+    { x: left, y: bottom }
+  ];
+}
+
 function lockedShapeFromDrag(point) {
-  const h = homographyFromPaper();
-  const inverse = inverseHomographyFromPaper();
-  if (!h || !inverse || !state.dragging) return null;
-
-  const dragged = applyHomography(h, point);
-  const startMapped = state.dragging.startTarget.map((targetPoint) => applyHomography(h, targetPoint));
-  if (startMapped.some((targetPoint) => !Number.isFinite(targetPoint.x) || !Number.isFinite(targetPoint.y))) return null;
-
+  if (!state.dragging) return null;
   const index = state.dragging.index;
-  const opposite = startMapped[(index + 2) % 4];
-  let width = Math.abs(dragged.x - opposite.x);
-  let height = Math.abs(dragged.y - opposite.y);
+  const opposite = state.dragging.startTarget[(index + 2) % 4];
+  let dx = point.x - opposite.x;
+  let dy = point.y - opposite.y;
 
   if (state.shapeMode === "square") {
-    const size = Math.max(width, height);
-    width = size;
-    height = size;
+    const size = Math.max(Math.abs(dx), Math.abs(dy));
+    dx = Math.sign(dx || 1) * size;
+    dy = Math.sign(dy || 1) * size;
   }
 
-  const xDirection = dragged.x >= opposite.x ? 1 : -1;
-  const yDirection = dragged.y >= opposite.y ? 1 : -1;
-  const xA = opposite.x;
-  const yA = opposite.y;
-  const xB = opposite.x + xDirection * width;
-  const yB = opposite.y + yDirection * height;
-
-  const lockedByDraggedIndex = {
-    0: [{ x: xB, y: yB }, { x: xA, y: yB }, { x: xA, y: yA }, { x: xB, y: yA }],
-    1: [{ x: xA, y: yB }, { x: xB, y: yB }, { x: xB, y: yA }, { x: xA, y: yA }],
-    2: [{ x: xA, y: yA }, { x: xB, y: yA }, { x: xB, y: yB }, { x: xA, y: yB }],
-    3: [{ x: xB, y: yA }, { x: xA, y: yA }, { x: xA, y: yB }, { x: xB, y: yB }]
-  };
-
-  const locked = lockedByDraggedIndex[index];
-  return locked.map((targetPoint) => clampPoint(applyHomography(inverse, targetPoint)));
+  const dragged = { x: opposite.x + dx, y: opposite.y + dy };
+  return rectangleFromBounds(opposite.x, opposite.y, dragged.x, dragged.y);
 }
 
 function confidenceForMeasurement(measurement) {
@@ -537,7 +546,7 @@ function render() {
   confidenceNote.textContent = confidenceState.note;
   statusLabel.textContent = state.step === "photo" ? "Take photo" : state.step === "outline" ? "Outline area" : state.step === "result" ? "Result" : "Calibrate paper";
   cameraHint.textContent = state.photoStatus || (state.step === "outline" && state.shapeMode !== "free"
-    ? "Locked shape mode: drag any gold corner to resize without distorting it."
+    ? "Locked shape mode: drag any gold corner to resize the visible shape."
     : state.step === "outline"
     ? "Drag the gold corners around the area you want measured."
     : "Drag the green corners onto the exact paper corners.");
