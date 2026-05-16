@@ -597,6 +597,32 @@ function updateOverlayFromPointer(event) {
   render();
 }
 
+function getPhotoFrame() {
+  const cameraRect = camera.getBoundingClientRect();
+  if (!state.photoUrl || !photoPreview.naturalWidth || !photoPreview.naturalHeight) {
+    return {
+      left: 0,
+      top: 0,
+      width: cameraRect.width,
+      height: cameraRect.height
+    };
+  }
+
+  const scale = Math.min(
+    cameraRect.width / photoPreview.naturalWidth,
+    cameraRect.height / photoPreview.naturalHeight
+  );
+  const width = photoPreview.naturalWidth * scale;
+  const height = photoPreview.naturalHeight * scale;
+
+  return {
+    left: (cameraRect.width - width) / 2,
+    top: (cameraRect.height - height) / 2,
+    width,
+    height
+  };
+}
+
 function pointerToSvgPoint(event) {
   const svgPoint = overlay.createSVGPoint();
   svgPoint.x = event.clientX;
@@ -613,13 +639,14 @@ function clampPoint(point) {
 
 function updateLoupe(point, event) {
   const cameraRect = camera.getBoundingClientRect();
-  const scaleX = cameraRect.width / VIEW_SIZE;
-  const scaleY = cameraRect.height / VIEW_SIZE;
+  const frame = getPhotoFrame();
+  const scaleX = frame.width / VIEW_SIZE;
+  const scaleY = frame.height / VIEW_SIZE;
   const targetX = point.x * scaleX;
   const targetY = point.y * scaleY;
   const loupeSize = 138;
   const loupeX = Math.max(8, Math.min(cameraRect.width - loupeSize - 8, event.clientX - cameraRect.left - loupeSize / 2));
-  const loupeY = Math.max(8, Math.min(cameraRect.height - loupeSize - 8, targetY - loupeSize - 28));
+  const loupeY = Math.max(8, Math.min(cameraRect.height - loupeSize - 8, frame.top + targetY - loupeSize - 28));
 
   loupe.classList.add("active");
   loupe.style.left = `${loupeX}px`;
@@ -627,8 +654,8 @@ function updateLoupe(point, event) {
 
   if (state.photoUrl) {
     loupePhoto.src = state.photoUrl;
-    loupePhoto.style.width = `${cameraRect.width * 2.4}px`;
-    loupePhoto.style.height = `${cameraRect.height * 2.4}px`;
+    loupePhoto.style.width = `${frame.width * 2.4}px`;
+    loupePhoto.style.height = `${frame.height * 2.4}px`;
     loupePhoto.style.left = `${loupeSize / 2 - targetX * 2.4}px`;
     loupePhoto.style.top = `${loupeSize / 2 - targetY * 2.4}px`;
   }
@@ -642,6 +669,7 @@ function render() {
   const sceneAngle = state.angle * -0.45;
   const measurement = measureTarget();
   const confidenceState = confidenceForMeasurement(measurement);
+  const frame = getPhotoFrame();
 
   camera.className = `camera ${state.step}`;
   camera.classList.toggle("has-photo", Boolean(state.photoUrl));
@@ -654,6 +682,12 @@ function render() {
     loupePhoto.removeAttribute("src");
   }
   scene.style.setProperty("--scene-angle", `${sceneAngle}deg`);
+  overlay.style.left = `${frame.left}px`;
+  overlay.style.top = `${frame.top}px`;
+  overlay.style.right = "auto";
+  overlay.style.bottom = "auto";
+  overlay.style.width = `${frame.width}px`;
+  overlay.style.height = `${frame.height}px`;
 
   stepButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.step === state.step);
