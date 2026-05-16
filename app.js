@@ -683,7 +683,13 @@ function render() {
   }
 
   resultSize.textContent = `${formatLength(measurement.width)} wide by ${formatLength(measurement.height)} high`;
-  resultArea.textContent = `${formatArea(measurement.area)}. Edge check: top ${formatLength(measurement.top)}, right ${formatLength(measurement.right)}, bottom ${formatLength(measurement.bottom)}, left ${formatLength(measurement.left)}.`;
+  resultArea.innerHTML = `
+    <span>${formatArea(measurement.area)}</span>
+    <span>Top: ${formatLength(measurement.top)}</span>
+    <span>Right: ${formatLength(measurement.right)}</span>
+    <span>Bottom: ${formatLength(measurement.bottom)}</span>
+    <span>Left: ${formatLength(measurement.left)}</span>
+  `;
 }
 
 Object.values(inputs).forEach((input) => {
