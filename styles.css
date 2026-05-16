@@ -525,18 +525,7 @@ select {
   background: #fff;
 }
 
-.shape-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.shape-size-grid {
-  margin-top: 12px;
-}
-
-.secondary.active-shape {
+.active-shape {
   border-color: var(--green);
   background: #dff0e7;
   color: #113d2e;
@@ -612,8 +601,7 @@ select {
 
   .grid,
   .action-row,
-  .photo-actions,
-  .shape-actions {
+  .photo-actions {
     grid-template-columns: 1fr;
   }
 }

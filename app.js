@@ -36,8 +36,6 @@ const inputs = {
   inputUnit: document.getElementById("inputUnit"),
   outputUnit: document.getElementById("outputUnit"),
   displayFormat: document.getElementById("displayFormat"),
-  shapeWidth: document.getElementById("shapeWidth"),
-  shapeHeight: document.getElementById("shapeHeight"),
   angle: document.getElementById("angle"),
   distance: document.getElementById("distance")
 };
@@ -58,16 +56,12 @@ const readoutSize = document.getElementById("readoutSize");
 const readoutArea = document.getElementById("readoutArea");
 const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
-const shapeBadge = document.getElementById("shapeBadge");
 const statusLabel = document.getElementById("statusLabel");
 const cameraHint = document.getElementById("cameraHint");
 const debugLine = document.getElementById("debugLine");
 const uploadInput = document.getElementById("uploadInput");
 const cameraInput = document.getElementById("cameraInput");
 const measureButton = document.getElementById("measureButton");
-const freeShapeButton = document.getElementById("freeShapeButton");
-const rectangleButton = document.getElementById("rectangleButton");
-const squareButton = document.getElementById("squareButton");
 const cameraFreeShapeButton = document.getElementById("cameraFreeShapeButton");
 const cameraRectangleButton = document.getElementById("cameraRectangleButton");
 const cameraSquareButton = document.getElementById("cameraSquareButton");
@@ -310,7 +304,6 @@ function applyStandardShape(mode) {
   const heightValue = mode === "square" ? widthValue : Math.max(1, state.shapeHeight);
   if (mode === "square") {
     state.shapeHeight = state.shapeWidth;
-    inputs.shapeHeight.value = state.shapeHeight;
   }
 
   const box = boundingBox(state.target);
@@ -591,10 +584,6 @@ function render() {
   paperPoly.setAttribute("points", pointsToString(state.paper));
   targetPoly.setAttribute("points", pointsToString(state.target));
   renderHandles();
-  shapeBadge.textContent = state.shapeMode === "free" ? "Free draw" : state.shapeMode === "square" ? "Square" : "Rectangle";
-  freeShapeButton.classList.toggle("active-shape", state.shapeMode === "free");
-  rectangleButton.classList.toggle("active-shape", state.shapeMode === "rectangle");
-  squareButton.classList.toggle("active-shape", state.shapeMode === "square");
   cameraFreeShapeButton.classList.toggle("active-shape", state.shapeMode === "free");
   cameraRectangleButton.classList.toggle("active-shape", state.shapeMode === "rectangle");
   cameraSquareButton.classList.toggle("active-shape", state.shapeMode === "square");
@@ -627,14 +616,6 @@ function render() {
 Object.values(inputs).forEach((input) => {
   input.addEventListener("input", () => {
     readInputs();
-    if (state.shapeMode === "square" && input === inputs.shapeWidth) {
-      state.shapeHeight = state.shapeWidth;
-      inputs.shapeHeight.value = state.shapeHeight;
-    }
-    if (state.shapeMode !== "free" && (input === inputs.shapeWidth || input === inputs.shapeHeight || input === inputs.inputUnit)) {
-      applyStandardShape(state.shapeMode);
-      return;
-    }
     render();
   });
 });
@@ -644,9 +625,6 @@ stepButtons.forEach((button) => {
 });
 
 measureButton.addEventListener("click", () => setStep("outline"));
-freeShapeButton.addEventListener("click", () => setShapeMode("free"));
-rectangleButton.addEventListener("click", () => setShapeMode("rectangle"));
-squareButton.addEventListener("click", () => setShapeMode("square"));
 cameraFreeShapeButton.addEventListener("click", () => setShapeMode("free"));
 cameraRectangleButton.addEventListener("click", () => setShapeMode("rectangle"));
 cameraSquareButton.addEventListener("click", () => setShapeMode("square"));
