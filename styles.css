@@ -49,20 +49,12 @@ button {
   box-shadow: 0 24px 60px rgba(16, 22, 19, 0.22);
 }
 
-.status,
 .controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
   color: #fff;
   background: #101613;
-}
-
-.status {
-  height: 48px;
-  padding: 0 24px;
-  font-size: 13px;
-  font-weight: 700;
 }
 
 .camera {
@@ -328,20 +320,6 @@ button {
   border-color: #9af0c7;
   background: rgba(154, 240, 199, 0.92);
   color: #113d2e;
-}
-
-.hint {
-  position: absolute;
-  z-index: 3;
-  left: 16px;
-  right: 16px;
-  top: 16px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: #fff;
-  background: rgba(16, 22, 19, 0.68);
-  font-size: 12px;
-  line-height: 1.35;
 }
 
 .readout {

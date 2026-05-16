@@ -57,8 +57,6 @@ const readoutArea = document.getElementById("readoutArea");
 const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
 const angleReadout = document.getElementById("angleReadout");
-const statusLabel = document.getElementById("statusLabel");
-const cameraHint = document.getElementById("cameraHint");
 const debugLine = document.getElementById("debugLine");
 const uploadInput = document.getElementById("uploadInput");
 const cameraInput = document.getElementById("cameraInput");
@@ -707,12 +705,6 @@ function render() {
   confidence.className = `badge ${confidenceState.className}`;
   confidenceNote.textContent = confidenceState.note;
   angleReadout.textContent = formatAngle(state.angle);
-  statusLabel.textContent = state.step === "photo" ? "Take photo" : state.step === "outline" ? "Outline area" : state.step === "result" ? "Result" : "Calibrate paper";
-  cameraHint.textContent = state.photoStatus || (state.step === "outline" && state.shapeMode !== "free"
-    ? "Locked shape mode: drag a gold side to change width or length."
-    : state.step === "outline"
-    ? "Drag the gold corners around the area you want measured."
-    : "Resize the green paper rectangle over the 8.5 x 11 sheet.");
   debugLine.textContent = state.photoStatus || (state.photo ? `Loaded ${state.photo}` : "No photo selected yet.");
 
   if (!measurement) {
