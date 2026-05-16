@@ -507,6 +507,24 @@ button {
   gap: 12px;
 }
 
+.calibration-note {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffdf6;
+}
+
+.calibration-note strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.calibration-note p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
 label {
   display: grid;
   gap: 7px;

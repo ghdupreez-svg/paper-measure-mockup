@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Paper Measure Mockup</title>
-    <link rel="stylesheet" href="styles.css?v=invisible-side-handles-1" />
+    <link rel="stylesheet" href="styles.css?v=known-size-correction-1" />
   </head>
   <body>
     <main class="app">
@@ -155,13 +155,22 @@
             </select>
           </label>
           <label>
-            Distance from wall, feet
-            <input id="distance" type="number" value="18" step="1" min="0" />
+            Known object width, inches
+            <input id="knownWidth" type="number" value="0" step="0.125" min="0" />
           </label>
+          <label>
+            Known object height, inches
+            <input id="knownHeight" type="number" value="0" step="0.125" min="0" />
+          </label>
+        </section>
+
+        <section class="calibration-note">
+          <strong>Accuracy note</strong>
+          <p>Place the paper on the same flat plane as the object. If you know one real object dimension, enter it above to scale-correct the live result.</p>
         </section>
 
       </section>
     </main>
-    <script src="app.js?v=invisible-side-handles-1"></script>
+    <script src="app.js?v=known-size-correction-1"></script>
   </body>
 </html>

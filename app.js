@@ -10,7 +10,8 @@ const state = {
   shapeMode: "free",
   shapeWidth: 72,
   shapeHeight: 48,
-  distance: 18,
+  knownWidth: 0,
+  knownHeight: 0,
   photo: "",
   photoUrl: "",
   photoStatus: "",
@@ -40,7 +41,8 @@ const inputs = {
   inputUnit: document.getElementById("inputUnit"),
   outputUnit: document.getElementById("outputUnit"),
   displayFormat: document.getElementById("displayFormat"),
-  distance: document.getElementById("distance")
+  knownWidth: document.getElementById("knownWidth"),
+  knownHeight: document.getElementById("knownHeight")
 };
 
 const camera = document.getElementById("camera");
@@ -255,6 +257,29 @@ function measureTarget() {
   const area = polygonArea(mapped);
 
   return { width, height, area, top, right, bottom, left };
+}
+
+function applyKnownSizeCorrection(measurement) {
+  if (!measurement) return null;
+  const knownWidth = Math.max(0, Number(state.knownWidth) || 0);
+  const knownHeight = Math.max(0, Number(state.knownHeight) || 0);
+  const ratios = [];
+
+  if (knownWidth > 0 && measurement.width > 0) ratios.push(knownWidth / measurement.width);
+  if (knownHeight > 0 && measurement.height > 0) ratios.push(knownHeight / measurement.height);
+  if (!ratios.length) return { ...measurement, correctionScale: 1 };
+
+  const correctionScale = ratios.reduce((sum, value) => sum + value, 0) / ratios.length;
+  return {
+    width: measurement.width * correctionScale,
+    height: measurement.height * correctionScale,
+    area: measurement.area * correctionScale * correctionScale,
+    top: measurement.top * correctionScale,
+    right: measurement.right * correctionScale,
+    bottom: measurement.bottom * correctionScale,
+    left: measurement.left * correctionScale,
+    correctionScale
+  };
 }
 
 function inverseHomographyFromPaper() {
@@ -752,7 +777,8 @@ function hideLoupe() {
 }
 
 function render() {
-  const measurement = measureTarget();
+  const rawMeasurement = measureTarget();
+  const measurement = applyKnownSizeCorrection(rawMeasurement);
   const confidenceState = confidenceForMeasurement(measurement);
   const frame = getPhotoFrame();
   const paperBox = boundingBox(state.paper);
@@ -818,8 +844,12 @@ function render() {
   }
 
   resultSize.textContent = `${formatLength(measurement.width)} wide by ${formatLength(measurement.height)} high`;
+  const correctionLine = measurement.correctionScale && Math.abs(measurement.correctionScale - 1) > 0.001
+    ? `<span>Known-size correction: ${measurement.correctionScale.toFixed(3)}x</span>`
+    : "";
   resultArea.innerHTML = `
     <span>${formatArea(measurement.area)}</span>
+    ${correctionLine}
     <span>Top: ${formatLength(measurement.top)}</span>
     <span>Right: ${formatLength(measurement.right)}</span>
     <span>Bottom: ${formatLength(measurement.bottom)}</span>
