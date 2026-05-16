@@ -10,7 +10,6 @@ const state = {
   shapeMode: "free",
   shapeWidth: 72,
   shapeHeight: 48,
-  angle: 0,
   distance: 18,
   photo: "",
   photoUrl: "",
@@ -38,7 +37,6 @@ const inputs = {
   inputUnit: document.getElementById("inputUnit"),
   outputUnit: document.getElementById("outputUnit"),
   displayFormat: document.getElementById("displayFormat"),
-  angle: document.getElementById("angle"),
   distance: document.getElementById("distance")
 };
 
@@ -56,7 +54,6 @@ const confidence = document.getElementById("confidence");
 const confidenceNote = document.getElementById("confidenceNote");
 const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
-const angleReadout = document.getElementById("angleReadout");
 const debugLine = document.getElementById("debugLine");
 const uploadInput = document.getElementById("uploadInput");
 const cameraInput = document.getElementById("cameraInput");
@@ -124,11 +121,6 @@ function formatLength(valueInches) {
 function formatArea(valueSqInches) {
   const converted = state.outputUnit === "ft" ? valueSqInches / 144 : valueSqInches;
   return `${converted.toFixed(state.outputUnit === "ft" ? 2 : 1)} ${areaLabel(state.outputUnit)}`;
-}
-
-function formatAngle(value) {
-  if (value === 0) return "0° center";
-  return `${Math.abs(value)}° ${value < 0 ? "left" : "right"}`;
 }
 
 function gcd(a, b) {
@@ -495,24 +487,10 @@ function confidenceForMeasurement(measurement) {
       note: "The paper selection is too small or distorted. Move the green handles to the visible sheet corners."
     };
   }
-  if (Math.abs(state.angle) > 35) {
-    return {
-      label: "Low confidence",
-      className: "low",
-      note: "The camera angle is steep. Retake closer to straight-on for a stronger test."
-    };
-  }
-  if (Math.abs(state.angle) > 15) {
-    return {
-      label: "Medium confidence",
-      className: "",
-      note: "Perspective correction is active. Results are best when the paper and target area are on the same flat wall."
-    };
-  }
   return {
     label: "High confidence",
     className: "high",
-    note: "Straight-on photo with same-plane paper calibration."
+    note: "Results are best when the paper and target area are on the same flat wall."
   };
 }
 
@@ -670,7 +648,6 @@ function hideLoupe() {
 }
 
 function render() {
-  const sceneAngle = state.angle * -0.45;
   const measurement = measureTarget();
   const confidenceState = confidenceForMeasurement(measurement);
   const frame = getPhotoFrame();
@@ -685,7 +662,6 @@ function render() {
     photoPreview.removeAttribute("src");
     loupePhoto.removeAttribute("src");
   }
-  scene.style.setProperty("--scene-angle", `${sceneAngle}deg`);
   overlay.style.left = `${frame.left}px`;
   overlay.style.top = `${frame.top}px`;
   overlay.style.right = "auto";
@@ -716,7 +692,6 @@ function render() {
   confidence.textContent = confidenceState.label;
   confidence.className = `badge ${confidenceState.className}`;
   confidenceNote.textContent = confidenceState.note;
-  angleReadout.textContent = formatAngle(state.angle);
   debugLine.textContent = state.photoStatus || (state.photo ? `Loaded ${state.photo}` : "No photo selected yet.");
 
   if (!measurement) {

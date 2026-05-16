@@ -86,7 +86,7 @@ button {
 }
 
 .scene {
-  transform: perspective(900px) rotateY(var(--scene-angle, -10deg));
+  transform: perspective(900px);
   transform-origin: center;
 }
 
@@ -487,11 +487,6 @@ label {
   gap: 7px;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 800;
-}
-
-#angleReadout {
-  color: var(--green);
   font-weight: 800;
 }
 
