@@ -424,29 +424,11 @@ button {
   letter-spacing: 0;
 }
 
-.tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.tabs button,
 .primary,
 .secondary {
   min-height: 42px;
   border-radius: 8px;
   font-weight: 800;
-}
-
-.tabs button {
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--ink);
-}
-
-.tabs button.active {
-  border-color: var(--green);
-  background: #dff0e7;
 }
 
 .card,
