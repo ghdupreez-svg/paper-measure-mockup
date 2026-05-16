@@ -19,10 +19,10 @@ const state = {
   paperLocked: false,
   targetLocked: false,
   paper: [
-    { x: 625, y: 470 },
-    { x: 735, y: 455 },
-    { x: 745, y: 605 },
-    { x: 620, y: 620 }
+    { x: 625, y: 455 },
+    { x: 745, y: 455 },
+    { x: 745, y: 620 },
+    { x: 625, y: 620 }
   ],
   target: [
     { x: 155, y: 265 },
