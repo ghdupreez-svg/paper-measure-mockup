@@ -63,8 +63,6 @@ const cameraRectangleButton = document.getElementById("cameraRectangleButton");
 const cameraSquareButton = document.getElementById("cameraSquareButton");
 const paperLockButton = document.getElementById("paperLockButton");
 const targetLockButton = document.getElementById("targetLockButton");
-const resultButton = document.getElementById("resultButton");
-const resetButton = document.getElementById("resetButton");
 const stepButtons = document.querySelectorAll("[data-step]");
 const stepLabels = document.querySelectorAll("[data-step-label]");
 
@@ -581,27 +579,11 @@ function updateOverlayFromPointer(event) {
 
 function getPhotoFrame() {
   const cameraRect = camera.getBoundingClientRect();
-  if (!state.photoUrl || !photoPreview.naturalWidth || !photoPreview.naturalHeight) {
-    return {
-      left: 0,
-      top: 0,
-      width: cameraRect.width,
-      height: cameraRect.height
-    };
-  }
-
-  const scale = Math.min(
-    cameraRect.width / photoPreview.naturalWidth,
-    cameraRect.height / photoPreview.naturalHeight
-  );
-  const width = photoPreview.naturalWidth * scale;
-  const height = photoPreview.naturalHeight * scale;
-
   return {
-    left: (cameraRect.width - width) / 2,
-    top: (cameraRect.height - height) / 2,
-    width,
-    height
+    left: 0,
+    top: 0,
+    width: cameraRect.width,
+    height: cameraRect.height
   };
 }
 
@@ -727,9 +709,6 @@ targetLockButton.addEventListener("click", () => {
   state.targetLocked = !state.targetLocked;
   render();
 });
-resultButton.addEventListener("click", () => setStep("result"));
-resetButton.addEventListener("click", resetHandles);
-
 function loadSelectedPhoto(input) {
   const file = input.files && input.files[0];
   if (!file) {

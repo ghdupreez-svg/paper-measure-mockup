@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Paper Measure Mockup</title>
-    <link rel="stylesheet" href="styles.css?v=no-camera-angle-1" />
+    <link rel="stylesheet" href="styles.css?v=live-result-under-camera-1" />
   </head>
   <body>
     <main class="app">
@@ -60,6 +60,12 @@
           </label>
           <button class="icon-button" id="measureButton" type="button" aria-label="Outline measurement">M</button>
         </div>
+
+        <section class="result phone-result">
+          <span>Selected area</span>
+          <strong id="resultSize">Waiting for target outline</strong>
+          <p id="resultArea">Use the green paper handles first, then set the gold measurement handles.</p>
+        </section>
       </section>
 
       <section class="panel">
@@ -126,18 +132,8 @@
           </label>
         </section>
 
-        <section class="result">
-          <span>Selected area</span>
-          <strong id="resultSize">Waiting for target outline</strong>
-          <p id="resultArea">Use the green paper handles first, then set the gold measurement handles.</p>
-        </section>
-
-        <div class="action-row">
-          <button class="secondary" id="resetButton" type="button">Reset handles</button>
-          <button class="primary" id="resultButton" type="button">Calculate estimate</button>
-        </div>
       </section>
     </main>
-    <script src="app.js?v=no-camera-angle-1"></script>
+    <script src="app.js?v=live-result-under-camera-1"></script>
   </body>
 </html>
