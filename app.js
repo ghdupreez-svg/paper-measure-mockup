@@ -10,7 +10,7 @@ const state = {
   shapeMode: "free",
   shapeWidth: 72,
   shapeHeight: 48,
-  angle: 24,
+  angle: 0,
   distance: 18,
   photo: "",
   photoUrl: "",
