@@ -52,8 +52,6 @@ const paperHandles = document.getElementById("paperHandles");
 const targetHandles = document.getElementById("targetHandles");
 const confidence = document.getElementById("confidence");
 const confidenceNote = document.getElementById("confidenceNote");
-const readoutSize = document.getElementById("readoutSize");
-const readoutArea = document.getElementById("readoutArea");
 const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
 const angleReadout = document.getElementById("angleReadout");
@@ -708,15 +706,11 @@ function render() {
   debugLine.textContent = state.photoStatus || (state.photo ? `Loaded ${state.photo}` : "No photo selected yet.");
 
   if (!measurement) {
-    readoutSize.textContent = "--";
-    readoutArea.textContent = "Waiting for calibration";
     resultSize.textContent = "Waiting for target outline";
     resultArea.textContent = "Use the green paper handles first, then set the gold measurement handles.";
     return;
   }
 
-  readoutSize.textContent = `${formatLength(measurement.width)} x ${formatLength(measurement.height)}`;
-  readoutArea.textContent = `${formatArea(measurement.area)} estimated`;
   resultSize.textContent = `${formatLength(measurement.width)} wide by ${formatLength(measurement.height)} high`;
   resultArea.textContent = `${formatArea(measurement.area)}. Edge check: top ${formatLength(measurement.top)}, right ${formatLength(measurement.right)}, bottom ${formatLength(measurement.bottom)}, left ${formatLength(measurement.left)}.`;
 }
