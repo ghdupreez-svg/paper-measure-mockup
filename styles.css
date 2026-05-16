@@ -405,9 +405,9 @@ button {
 
 .header h1 {
   margin: 0;
-  max-width: 700px;
-  font-size: clamp(30px, 5vw, 54px);
-  line-height: 1;
+  max-width: 620px;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.08;
   letter-spacing: 0;
 }
 
@@ -525,16 +525,20 @@ select {
 }
 
 .result strong {
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .phone-result strong {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 #resultArea {
   display: grid;
   gap: 2px;
+}
+
+#resultArea span {
+  display: block;
 }
 
 .photo-actions {
