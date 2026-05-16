@@ -218,6 +218,24 @@ button {
   fill: #ffe0a4;
 }
 
+.edge-handle {
+  fill: #ffe0a4;
+  stroke: #101613;
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+}
+
+.edge-left,
+.edge-right {
+  cursor: ew-resize;
+}
+
+.edge-top,
+.edge-bottom {
+  cursor: ns-resize;
+}
+
 .handle-label {
   pointer-events: none;
   text-anchor: middle;

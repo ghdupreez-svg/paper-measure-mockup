@@ -384,6 +384,41 @@ function lockedShapeFromDrag(point) {
   return rectangleFromBounds(opposite.x, opposite.y, dragged.x, dragged.y);
 }
 
+function lockedShapeFromEdgeDrag(point) {
+  if (!state.dragging || !state.dragging.startBox) return null;
+  let { minX, minY, maxX, maxY } = state.dragging.startBox;
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  if (state.dragging.edge === "left") minX = Math.min(point.x, maxX - 20);
+  if (state.dragging.edge === "right") maxX = Math.max(point.x, minX + 20);
+  if (state.dragging.edge === "top") minY = Math.min(point.y, maxY - 20);
+  if (state.dragging.edge === "bottom") maxY = Math.max(point.y, minY + 20);
+
+  if (state.shapeMode === "square") {
+    const size = Math.max(maxX - minX, maxY - minY);
+    if (state.dragging.edge === "left") {
+      minX = maxX - size;
+      minY = centerY - size / 2;
+      maxY = centerY + size / 2;
+    } else if (state.dragging.edge === "right") {
+      maxX = minX + size;
+      minY = centerY - size / 2;
+      maxY = centerY + size / 2;
+    } else if (state.dragging.edge === "top") {
+      minY = maxY - size;
+      minX = centerX - size / 2;
+      maxX = centerX + size / 2;
+    } else if (state.dragging.edge === "bottom") {
+      maxY = minY + size;
+      minX = centerX - size / 2;
+      maxX = centerX + size / 2;
+    }
+  }
+
+  return rectangleFromBounds(minX, minY, maxX, maxY);
+}
+
 function confidenceForMeasurement(measurement) {
   const paperTop = distance(state.paper[0], state.paper[1]);
   const paperRight = distance(state.paper[1], state.paper[2]);
@@ -442,11 +477,31 @@ function makeHandle(group, kind, point, index) {
   group.appendChild(label);
 }
 
+function makeEdgeHandle(group, edge, point) {
+  const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  rect.setAttribute("x", point.x - 26);
+  rect.setAttribute("y", point.y - 13);
+  rect.setAttribute("width", 52);
+  rect.setAttribute("height", 26);
+  rect.setAttribute("rx", 9);
+  rect.setAttribute("class", `edge-handle edge-${edge}`);
+  rect.dataset.kind = "target";
+  rect.dataset.edge = edge;
+  group.appendChild(rect);
+}
+
 function renderHandles() {
   paperHandles.replaceChildren();
   targetHandles.replaceChildren();
   state.paper.forEach((point, index) => makeHandle(paperHandles, "paper", point, index));
   state.target.forEach((point, index) => makeHandle(targetHandles, "target", point, index));
+  if (state.shapeMode !== "free") {
+    const box = boundingBox(state.target);
+    makeEdgeHandle(targetHandles, "top", { x: (box.minX + box.maxX) / 2, y: box.minY });
+    makeEdgeHandle(targetHandles, "right", { x: box.maxX, y: (box.minY + box.maxY) / 2 });
+    makeEdgeHandle(targetHandles, "bottom", { x: (box.minX + box.maxX) / 2, y: box.maxY });
+    makeEdgeHandle(targetHandles, "left", { x: box.minX, y: (box.minY + box.maxY) / 2 });
+  }
 }
 
 function updateOverlayFromPointer(event) {
@@ -454,7 +509,10 @@ function updateOverlayFromPointer(event) {
   const point = pointerToSvgPoint(event);
   const list = state.dragging.kind === "paper" ? state.paper : state.target;
 
-  if (state.dragging.kind === "target" && state.shapeMode !== "free") {
+  if (state.dragging.edge && state.shapeMode !== "free") {
+    const locked = lockedShapeFromEdgeDrag(point);
+    if (locked) state.target = locked;
+  } else if (state.dragging.kind === "target" && state.shapeMode !== "free") {
     const locked = lockedShapeFromDrag(point);
     if (locked) state.target = locked;
   } else {
@@ -546,7 +604,7 @@ function render() {
   confidenceNote.textContent = confidenceState.note;
   statusLabel.textContent = state.step === "photo" ? "Take photo" : state.step === "outline" ? "Outline area" : state.step === "result" ? "Result" : "Calibrate paper";
   cameraHint.textContent = state.photoStatus || (state.step === "outline" && state.shapeMode !== "free"
-    ? "Locked shape mode: drag any gold corner to resize the visible shape."
+    ? "Locked shape mode: drag a gold side to change width or length."
     : state.step === "outline"
     ? "Drag the gold corners around the area you want measured."
     : "Drag the green corners onto the exact paper corners.");
@@ -639,14 +697,16 @@ photoPreview.addEventListener("error", () => {
 });
 
 overlay.addEventListener("pointerdown", (event) => {
-  const handle = event.target.closest(".handle");
+  const handle = event.target.closest(".handle, .edge-handle");
   if (!handle) return;
   const startPoint = pointerToSvgPoint(event);
   state.dragging = {
     kind: handle.dataset.kind,
-    index: Number(handle.dataset.index),
+    index: handle.dataset.index === undefined ? null : Number(handle.dataset.index),
+    edge: handle.dataset.edge || "",
     startPoint,
-    startTarget: state.target.map((point) => ({ ...point }))
+    startTarget: state.target.map((point) => ({ ...point })),
+    startBox: boundingBox(state.target)
   };
   overlay.setPointerCapture(event.pointerId);
   updateOverlayFromPointer(event);
