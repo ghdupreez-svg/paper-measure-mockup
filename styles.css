@@ -188,7 +188,7 @@ button {
 .target-poly {
   fill: rgba(165, 111, 29, 0.2);
   stroke: #ffe0a4;
-  stroke-width: 7;
+  stroke-width: 4;
   stroke-dasharray: 14 12;
   cursor: move;
 }
@@ -231,20 +231,19 @@ button {
 }
 
 .edge-handle {
-  stroke: #101613;
-  stroke-width: 4;
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 0;
   vector-effect: non-scaling-stroke;
   cursor: grab;
 }
 
 .target-edge-handle {
-  fill: #ffe0a4;
+  fill: transparent;
 }
 
 .paper-edge-handle {
-  fill: rgba(154, 240, 199, 0.24);
-  stroke: rgba(16, 22, 19, 0.42);
-  stroke-width: 2;
+  fill: transparent;
 }
 
 .edge-left,
