@@ -17,6 +17,9 @@ const state = {
   dragging: null,
   paperLocked: false,
   targetLocked: false,
+  selectedKind: "target",
+  selectedIndex: null,
+  nudgeStep: 4,
   paper: [
     { x: 625, y: 455 },
     { x: 745, y: 455 },
@@ -63,6 +66,10 @@ const cameraRectangleButton = document.getElementById("cameraRectangleButton");
 const cameraSquareButton = document.getElementById("cameraSquareButton");
 const paperLockButton = document.getElementById("paperLockButton");
 const targetLockButton = document.getElementById("targetLockButton");
+const adjustKindButtons = document.querySelectorAll("[data-adjust-kind]");
+const adjustPointButtons = document.querySelectorAll("[data-adjust-point]");
+const nudgeButtons = document.querySelectorAll("[data-nudge]");
+const sizeButtons = document.querySelectorAll("[data-size-axis]");
 const stepButtons = document.querySelectorAll("[data-step]");
 const stepLabels = document.querySelectorAll("[data-step-label]");
 
@@ -74,6 +81,12 @@ function resetHandles() {
     { x: 870, y: 775 },
     { x: 135, y: 795 }
   ];
+  render();
+}
+
+function setSelected(kind, index = null) {
+  state.selectedKind = kind;
+  state.selectedIndex = index;
   render();
 }
 
@@ -496,11 +509,20 @@ function makeHandle(group, kind, point, index) {
   const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
   circle.setAttribute("cx", point.x);
   circle.setAttribute("cy", point.y);
-  circle.setAttribute("r", kind === "paper" ? 20 : 18);
-  circle.setAttribute("class", `handle ${kind}-handle`);
+  circle.setAttribute("r", kind === "paper" ? 14 : 13);
+  circle.setAttribute("class", `handle ${kind}-handle ${state.selectedKind === kind && state.selectedIndex === index ? "selected-handle" : ""}`);
   circle.dataset.kind = kind;
   circle.dataset.index = index;
   group.appendChild(circle);
+
+  const touch = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  touch.setAttribute("cx", point.x);
+  touch.setAttribute("cy", point.y);
+  touch.setAttribute("r", 30);
+  touch.setAttribute("class", "touch-handle");
+  touch.dataset.kind = kind;
+  touch.dataset.index = index;
+  group.appendChild(touch);
 
   const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
   label.setAttribute("x", point.x);
@@ -601,6 +623,102 @@ function clampPoint(point) {
   };
 }
 
+function activePoints() {
+  return state.selectedKind === "paper" ? state.paper : state.target;
+}
+
+function setActivePoints(points) {
+  if (state.selectedKind === "paper") {
+    state.paper = points;
+  } else {
+    state.target = points;
+  }
+}
+
+function selectedIsLocked() {
+  return (state.selectedKind === "paper" && state.paperLocked) || (state.selectedKind === "target" && state.targetLocked);
+}
+
+function movePoints(points, dx, dy) {
+  const box = boundingBox(points);
+  const safeDx = Math.max(-box.minX, Math.min(VIEW_SIZE - box.maxX, dx));
+  const safeDy = Math.max(-box.minY, Math.min(VIEW_SIZE - box.maxY, dy));
+  return points.map((point) => ({ x: point.x + safeDx, y: point.y + safeDy }));
+}
+
+function resizeActiveBox(axis, direction) {
+  if (selectedIsLocked()) return;
+  const points = activePoints();
+  const box = boundingBox(points);
+  const centerX = (box.minX + box.maxX) / 2;
+  const centerY = (box.minY + box.maxY) / 2;
+  let width = box.maxX - box.minX;
+  let height = box.maxY - box.minY;
+  const delta = state.nudgeStep * direction * 2;
+
+  if (axis === "width") width = Math.max(20, width + delta);
+  if (axis === "height") height = Math.max(20, height + delta);
+
+  if (state.selectedKind === "paper") {
+    const aspect = Math.max(0.05, state.paperHeight / state.paperWidth);
+    if (axis === "width") height = width * aspect;
+    if (axis === "height") width = height / aspect;
+  } else if (state.shapeMode === "square") {
+    const size = Math.max(width, height);
+    width = size;
+    height = size;
+  }
+
+  setActivePoints(rectangleFromBounds(
+    centerX - width / 2,
+    centerY - height / 2,
+    centerX + width / 2,
+    centerY + height / 2
+  ));
+  render();
+}
+
+function nudgeSelected(dx, dy) {
+  if (selectedIsLocked()) return;
+  const points = activePoints();
+  if (state.selectedIndex === null) {
+    setActivePoints(movePoints(points, dx, dy));
+    render();
+    return;
+  }
+
+  const next = points.map((point) => ({ ...point }));
+  next[state.selectedIndex] = clampPoint({
+    x: next[state.selectedIndex].x + dx,
+    y: next[state.selectedIndex].y + dy
+  });
+
+  if (state.selectedKind === "paper") {
+    const opposite = points[(state.selectedIndex + 2) % 4];
+    const dragged = next[state.selectedIndex];
+    const aspect = Math.max(0.05, state.paperHeight / state.paperWidth);
+    let dxFromOpposite = dragged.x - opposite.x;
+    let dyFromOpposite = dragged.y - opposite.y;
+    const width = Math.max(Math.abs(dxFromOpposite), Math.abs(dyFromOpposite) / aspect);
+    dxFromOpposite = Math.sign(dxFromOpposite || 1) * width;
+    dyFromOpposite = Math.sign(dyFromOpposite || 1) * width * aspect;
+    setActivePoints(rectangleFromBounds(opposite.x, opposite.y, opposite.x + dxFromOpposite, opposite.y + dyFromOpposite));
+  } else if (state.shapeMode !== "free") {
+    const opposite = points[(state.selectedIndex + 2) % 4];
+    let dxFromOpposite = next[state.selectedIndex].x - opposite.x;
+    let dyFromOpposite = next[state.selectedIndex].y - opposite.y;
+    if (state.shapeMode === "square") {
+      const size = Math.max(Math.abs(dxFromOpposite), Math.abs(dyFromOpposite));
+      dxFromOpposite = Math.sign(dxFromOpposite || 1) * size;
+      dyFromOpposite = Math.sign(dyFromOpposite || 1) * size;
+    }
+    setActivePoints(rectangleFromBounds(opposite.x, opposite.y, opposite.x + dxFromOpposite, opposite.y + dyFromOpposite));
+  } else {
+    setActivePoints(next);
+  }
+  render();
+}
+
 function updateLoupe(point, event) {
   const cameraRect = camera.getBoundingClientRect();
   const frame = getPhotoFrame();
@@ -662,6 +780,8 @@ function render() {
   targetPoly.setAttribute("points", pointsToString(state.target));
   paperPoly.classList.toggle("locked", state.paperLocked);
   targetPoly.classList.toggle("locked", state.targetLocked);
+  paperPoly.classList.toggle("selected-poly", state.selectedKind === "paper" && state.selectedIndex === null);
+  targetPoly.classList.toggle("selected-poly", state.selectedKind === "target" && state.selectedIndex === null);
   renderHandles();
   cameraFreeShapeButton.classList.toggle("active-shape", state.shapeMode === "free");
   cameraRectangleButton.classList.toggle("active-shape", state.shapeMode === "rectangle");
@@ -670,6 +790,13 @@ function render() {
   targetLockButton.classList.toggle("active-lock", state.targetLocked);
   paperLockButton.textContent = `Paper: ${state.paperLocked ? "Locked" : "Unlocked"}`;
   targetLockButton.textContent = `Measure: ${state.targetLocked ? "Locked" : "Unlocked"}`;
+  adjustKindButtons.forEach((button) => {
+    button.classList.toggle("active-adjust", button.dataset.adjustKind === state.selectedKind);
+  });
+  adjustPointButtons.forEach((button) => {
+    const selectedValue = state.selectedIndex === null ? "box" : String(state.selectedIndex);
+    button.classList.toggle("active-adjust", button.dataset.adjustPoint === selectedValue);
+  });
 
   confidence.textContent = confidenceState.label;
   confidence.className = `badge ${confidenceState.className}`;
@@ -703,7 +830,7 @@ stepButtons.forEach((button) => {
   button.addEventListener("click", () => setStep(button.dataset.step));
 });
 
-measureButton.addEventListener("click", () => setStep("outline"));
+measureButton.addEventListener("click", resetHandles);
 cameraFreeShapeButton.addEventListener("click", () => setShapeMode("free"));
 cameraRectangleButton.addEventListener("click", () => setShapeMode("rectangle"));
 cameraSquareButton.addEventListener("click", () => setShapeMode("square"));
@@ -714,6 +841,24 @@ paperLockButton.addEventListener("click", () => {
 targetLockButton.addEventListener("click", () => {
   state.targetLocked = !state.targetLocked;
   render();
+});
+adjustKindButtons.forEach((button) => {
+  button.addEventListener("click", () => setSelected(button.dataset.adjustKind, state.selectedIndex));
+});
+adjustPointButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const value = button.dataset.adjustPoint;
+    setSelected(state.selectedKind, value === "box" ? null : Number(value));
+  });
+});
+nudgeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const [dx, dy] = button.dataset.nudge.split(",").map(Number);
+    nudgeSelected(dx * state.nudgeStep, dy * state.nudgeStep);
+  });
+});
+sizeButtons.forEach((button) => {
+  button.addEventListener("click", () => resizeActiveBox(button.dataset.sizeAxis, Number(button.dataset.sizeDirection)));
 });
 function loadSelectedPhoto(input) {
   const file = input.files && input.files[0];
@@ -759,16 +904,18 @@ photoPreview.addEventListener("error", () => {
 });
 
 overlay.addEventListener("pointerdown", (event) => {
-  const dragTarget = event.target.closest(".handle, .edge-handle, #targetPoly, #paperPoly");
+  const dragTarget = event.target.closest(".handle, .touch-handle, .edge-handle, #targetPoly, #paperPoly");
   if (!dragTarget) return;
   const startPoint = pointerToSvgPoint(event);
   const isPolygon = dragTarget === targetPoly || dragTarget === paperPoly;
   const kind = isPolygon ? (dragTarget === paperPoly ? "paper" : "target") : dragTarget.dataset.kind;
   if ((kind === "paper" && state.paperLocked) || (kind === "target" && state.targetLocked)) return;
+  const index = dragTarget.dataset.index === undefined ? null : Number(dragTarget.dataset.index);
+  setSelected(kind, isPolygon ? null : index);
   state.dragging = {
     kind,
     mode: isPolygon ? "move" : "resize",
-    index: dragTarget.dataset.index === undefined ? null : Number(dragTarget.dataset.index),
+    index,
     edge: dragTarget.dataset.edge || "",
     startPoint,
     currentPoint: startPoint,

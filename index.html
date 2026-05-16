@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Paper Measure Mockup</title>
-    <link rel="stylesheet" href="styles.css?v=compact-title-result-1" />
+    <link rel="stylesheet" href="styles.css?v=precision-controls-1" />
   </head>
   <body>
     <main class="app">
@@ -58,13 +58,41 @@
           <label class="shutter file-control" aria-label="Take photo">
             <input id="cameraInput" type="file" accept="image/*" capture="environment" />
           </label>
-          <button class="icon-button" id="measureButton" type="button" aria-label="Outline measurement">M</button>
+          <button class="icon-button reset-control" id="measureButton" type="button" aria-label="Reset measurements">Reset</button>
         </div>
 
         <section class="result phone-result">
           <span>Selected area</span>
           <strong id="resultSize">Waiting for target outline</strong>
           <p id="resultArea">Use the green paper handles first, then set the gold measurement handles.</p>
+        </section>
+
+        <section class="adjust-panel" aria-label="Precise adjustment controls">
+          <div class="adjust-row two">
+            <button class="adjust-chip" type="button" data-adjust-kind="paper">Paper</button>
+            <button class="adjust-chip" type="button" data-adjust-kind="target">Measure</button>
+          </div>
+          <div class="adjust-row five">
+            <button class="adjust-chip" type="button" data-adjust-point="box">Box</button>
+            <button class="adjust-chip" type="button" data-adjust-point="0">1</button>
+            <button class="adjust-chip" type="button" data-adjust-point="1">2</button>
+            <button class="adjust-chip" type="button" data-adjust-point="2">3</button>
+            <button class="adjust-chip" type="button" data-adjust-point="3">4</button>
+          </div>
+          <div class="nudge-grid">
+            <span></span>
+            <button class="adjust-chip arrow-chip" type="button" data-nudge="0,-1">Up</button>
+            <span></span>
+            <button class="adjust-chip arrow-chip" type="button" data-nudge="-1,0">Left</button>
+            <button class="adjust-chip arrow-chip" type="button" data-nudge="0,1">Down</button>
+            <button class="adjust-chip arrow-chip" type="button" data-nudge="1,0">Right</button>
+          </div>
+          <div class="adjust-row four">
+            <button class="adjust-chip" type="button" data-size-axis="width" data-size-direction="-1">W -</button>
+            <button class="adjust-chip" type="button" data-size-axis="width" data-size-direction="1">W +</button>
+            <button class="adjust-chip" type="button" data-size-axis="height" data-size-direction="-1">H -</button>
+            <button class="adjust-chip" type="button" data-size-axis="height" data-size-direction="1">H +</button>
+          </div>
         </section>
       </section>
 
@@ -134,6 +162,6 @@
 
       </section>
     </main>
-    <script src="app.js?v=compact-title-result-1"></script>
+    <script src="app.js?v=precision-controls-1"></script>
   </body>
 </html>

@@ -176,7 +176,7 @@ button {
 
 .paper-poly,
 .target-poly {
-  stroke-width: 7;
+  stroke-width: 4;
   vector-effect: non-scaling-stroke;
 }
 
@@ -189,14 +189,18 @@ button {
 .target-poly {
   fill: rgba(165, 111, 29, 0.2);
   stroke: #ffe0a4;
-  stroke-dasharray: 18 14;
+  stroke-dasharray: 14 12;
   cursor: move;
+}
+
+.selected-poly {
+  filter: drop-shadow(0 0 8px rgba(154, 240, 199, 0.8));
 }
 
 .handle {
   cursor: grab;
   stroke: #101613;
-  stroke-width: 5;
+  stroke-width: 4;
   vector-effect: non-scaling-stroke;
 }
 
@@ -212,9 +216,21 @@ button {
   fill: #ffe0a4;
 }
 
+.selected-handle {
+  stroke: #fff;
+  stroke-width: 6;
+}
+
+.touch-handle {
+  fill: transparent;
+  stroke: transparent;
+  cursor: grab;
+  pointer-events: all;
+}
+
 .edge-handle {
   stroke: #101613;
-  stroke-width: 4;
+  stroke-width: 3;
   vector-effect: non-scaling-stroke;
   cursor: grab;
 }
@@ -241,7 +257,7 @@ button {
   pointer-events: none;
   text-anchor: middle;
   fill: #101613;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -368,6 +384,12 @@ button {
   color: #101613;
   background: #eef3f0;
   font-weight: 800;
+}
+
+.reset-control {
+  width: 66px;
+  border-radius: 999px;
+  font-size: 12px;
 }
 
 .icon-button.active {
@@ -518,6 +540,57 @@ select {
   border-radius: 0;
   background: #fff;
   font-size: 13px;
+}
+
+.adjust-panel {
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--line);
+  background: #fff;
+}
+
+.adjust-row {
+  display: grid;
+  gap: 6px;
+}
+
+.adjust-row.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.adjust-row.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.adjust-row.five {
+  grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr));
+}
+
+.nudge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.adjust-chip {
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #f8faf8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.adjust-chip.active-adjust {
+  border-color: var(--green);
+  background: #dff0e7;
+  color: #113d2e;
+}
+
+.arrow-chip {
+  background: #fff;
 }
 
 .result span {
