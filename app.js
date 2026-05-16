@@ -6,6 +6,7 @@ const state = {
   paperHeight: 11,
   inputUnit: "in",
   outputUnit: "ft",
+  displayFormat: "decimal",
   shapeMode: "free",
   shapeWidth: 72,
   shapeHeight: 48,
@@ -34,6 +35,7 @@ const inputs = {
   paperHeight: document.getElementById("paperHeight"),
   inputUnit: document.getElementById("inputUnit"),
   outputUnit: document.getElementById("outputUnit"),
+  displayFormat: document.getElementById("displayFormat"),
   shapeWidth: document.getElementById("shapeWidth"),
   shapeHeight: document.getElementById("shapeHeight"),
   angle: document.getElementById("angle"),
@@ -66,6 +68,9 @@ const measureButton = document.getElementById("measureButton");
 const freeShapeButton = document.getElementById("freeShapeButton");
 const rectangleButton = document.getElementById("rectangleButton");
 const squareButton = document.getElementById("squareButton");
+const cameraFreeShapeButton = document.getElementById("cameraFreeShapeButton");
+const cameraRectangleButton = document.getElementById("cameraRectangleButton");
+const cameraSquareButton = document.getElementById("cameraSquareButton");
 const resultButton = document.getElementById("resultButton");
 const resetButton = document.getElementById("resetButton");
 const stepButtons = document.querySelectorAll("[data-step]");
@@ -119,6 +124,9 @@ function areaLabel(unit) {
 }
 
 function formatLength(valueInches) {
+  if (state.outputUnit === "in" && state.displayFormat === "fraction") {
+    return `${formatInchFraction(valueInches)} in`;
+  }
   const converted = fromInches(valueInches, state.outputUnit);
   return `${converted.toFixed(state.outputUnit === "ft" ? 2 : 1)} ${unitLabel(state.outputUnit)}`;
 }
@@ -126,6 +134,32 @@ function formatLength(valueInches) {
 function formatArea(valueSqInches) {
   const converted = state.outputUnit === "ft" ? valueSqInches / 144 : valueSqInches;
   return `${converted.toFixed(state.outputUnit === "ft" ? 2 : 1)} ${areaLabel(state.outputUnit)}`;
+}
+
+function gcd(a, b) {
+  return b ? gcd(b, a % b) : a;
+}
+
+function formatInchFraction(value) {
+  const sign = value < 0 ? "-" : "";
+  const absolute = Math.abs(value);
+  const whole = Math.floor(absolute);
+  const denominator = 16;
+  let numerator = Math.round((absolute - whole) * denominator);
+  let displayWhole = whole;
+
+  if (numerator === denominator) {
+    displayWhole += 1;
+    numerator = 0;
+  }
+  if (!numerator) return `${sign}${displayWhole}`;
+
+  const divisor = gcd(numerator, denominator);
+  const reducedNumerator = numerator / divisor;
+  const reducedDenominator = denominator / divisor;
+  return displayWhole
+    ? `${sign}${displayWhole} ${reducedNumerator}/${reducedDenominator}`
+    : `${sign}${reducedNumerator}/${reducedDenominator}`;
 }
 
 function pointsToString(points) {
@@ -360,17 +394,36 @@ function renderHandles() {
 
 function updateOverlayFromPointer(event) {
   if (!state.dragging) return;
+  const point = pointerToSvgPoint(event);
+  const list = state.dragging.kind === "paper" ? state.paper : state.target;
+
+  if (state.dragging.kind === "target" && state.shapeMode !== "free") {
+    const dx = point.x - state.dragging.startPoint.x;
+    const dy = point.y - state.dragging.startPoint.y;
+    state.target = state.dragging.startTarget.map((targetPoint) => clampPoint({
+      x: targetPoint.x + dx,
+      y: targetPoint.y + dy
+    }));
+  } else {
+    list[state.dragging.index] = clampPoint(point);
+  }
+
+  updateLoupe(point, event);
+  render();
+}
+
+function pointerToSvgPoint(event) {
   const svgPoint = overlay.createSVGPoint();
   svgPoint.x = event.clientX;
   svgPoint.y = event.clientY - 72;
-  const point = svgPoint.matrixTransform(overlay.getScreenCTM().inverse());
-  const list = state.dragging.kind === "paper" ? state.paper : state.target;
-  list[state.dragging.index] = {
+  return svgPoint.matrixTransform(overlay.getScreenCTM().inverse());
+}
+
+function clampPoint(point) {
+  return {
     x: Math.max(0, Math.min(VIEW_SIZE, point.x)),
     y: Math.max(0, Math.min(VIEW_SIZE, point.y))
   };
-  updateLoupe(point, event);
-  render();
 }
 
 function updateLoupe(point, event) {
@@ -431,12 +484,17 @@ function render() {
   freeShapeButton.classList.toggle("active-shape", state.shapeMode === "free");
   rectangleButton.classList.toggle("active-shape", state.shapeMode === "rectangle");
   squareButton.classList.toggle("active-shape", state.shapeMode === "square");
+  cameraFreeShapeButton.classList.toggle("active-shape", state.shapeMode === "free");
+  cameraRectangleButton.classList.toggle("active-shape", state.shapeMode === "rectangle");
+  cameraSquareButton.classList.toggle("active-shape", state.shapeMode === "square");
 
   confidence.textContent = confidenceState.label;
   confidence.className = `badge ${confidenceState.className}`;
   confidenceNote.textContent = confidenceState.note;
   statusLabel.textContent = state.step === "photo" ? "Take photo" : state.step === "outline" ? "Outline area" : state.step === "result" ? "Result" : "Calibrate paper";
-  cameraHint.textContent = state.photoStatus || (state.step === "outline"
+  cameraHint.textContent = state.photoStatus || (state.step === "outline" && state.shapeMode !== "free"
+    ? "Locked shape mode: drag any gold handle to move the whole shape."
+    : state.step === "outline"
     ? "Drag the gold corners around the area you want measured."
     : "Drag the green corners onto the exact paper corners.");
   debugLine.textContent = state.photoStatus || (state.photo ? `Loaded ${state.photo}` : "No photo selected yet.");
@@ -478,6 +536,9 @@ measureButton.addEventListener("click", () => setStep("outline"));
 freeShapeButton.addEventListener("click", () => setShapeMode("free"));
 rectangleButton.addEventListener("click", () => setShapeMode("rectangle"));
 squareButton.addEventListener("click", () => setShapeMode("square"));
+cameraFreeShapeButton.addEventListener("click", () => setShapeMode("free"));
+cameraRectangleButton.addEventListener("click", () => setShapeMode("rectangle"));
+cameraSquareButton.addEventListener("click", () => setShapeMode("square"));
 resultButton.addEventListener("click", () => setStep("result"));
 resetButton.addEventListener("click", resetHandles);
 
@@ -527,9 +588,12 @@ photoPreview.addEventListener("error", () => {
 overlay.addEventListener("pointerdown", (event) => {
   const handle = event.target.closest(".handle");
   if (!handle) return;
+  const startPoint = pointerToSvgPoint(event);
   state.dragging = {
     kind: handle.dataset.kind,
-    index: Number(handle.dataset.index)
+    index: Number(handle.dataset.index),
+    startPoint,
+    startTarget: state.target.map((point) => ({ ...point }))
   };
   overlay.setPointerCapture(event.pointerId);
   updateOverlayFromPointer(event);

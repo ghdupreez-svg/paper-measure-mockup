@@ -41,6 +41,12 @@
             <div class="loupe-crosshair"></div>
           </div>
 
+          <div class="image-tools" aria-label="Shape tools">
+            <button class="tool-chip" id="cameraFreeShapeButton" type="button">Free</button>
+            <button class="tool-chip" id="cameraRectangleButton" type="button">Rectangle</button>
+            <button class="tool-chip" id="cameraSquareButton" type="button">Square</button>
+          </div>
+
           <div class="hint" id="cameraHint">Take or upload a photo, then drag the paper corners onto the sheet.</div>
           <div class="readout">
             <strong id="readoutSize">--</strong>
@@ -116,6 +122,13 @@
             <select id="outputUnit">
               <option value="in">Inches</option>
               <option value="ft" selected>Feet</option>
+            </select>
+          </label>
+          <label>
+            Display format
+            <select id="displayFormat">
+              <option value="decimal" selected>Decimal</option>
+              <option value="fraction">Fraction</option>
             </select>
           </label>
           <label>

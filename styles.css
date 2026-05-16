@@ -276,6 +276,33 @@ button {
   height: 2px;
 }
 
+.image-tools {
+  position: absolute;
+  z-index: 3;
+  left: 14px;
+  right: 14px;
+  bottom: 94px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tool-chip {
+  min-height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(16, 22, 19, 0.68);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.tool-chip.active-shape {
+  border-color: #9af0c7;
+  background: rgba(154, 240, 199, 0.92);
+  color: #113d2e;
+}
+
 .hint {
   position: absolute;
   z-index: 3;
