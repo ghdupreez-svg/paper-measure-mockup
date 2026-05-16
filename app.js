@@ -56,6 +56,7 @@ const readoutSize = document.getElementById("readoutSize");
 const readoutArea = document.getElementById("readoutArea");
 const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
+const angleReadout = document.getElementById("angleReadout");
 const statusLabel = document.getElementById("statusLabel");
 const cameraHint = document.getElementById("cameraHint");
 const debugLine = document.getElementById("debugLine");
@@ -71,12 +72,7 @@ const stepButtons = document.querySelectorAll("[data-step]");
 const stepLabels = document.querySelectorAll("[data-step-label]");
 
 function resetHandles() {
-  state.paper = [
-    { x: 625, y: 470 },
-    { x: 735, y: 455 },
-    { x: 745, y: 605 },
-    { x: 620, y: 620 }
-  ];
+  state.paper = rectangleFromBounds(625, 455, 745, 620);
   state.target = [
     { x: 155, y: 265 },
     { x: 845, y: 245 },
@@ -128,6 +124,11 @@ function formatLength(valueInches) {
 function formatArea(valueSqInches) {
   const converted = state.outputUnit === "ft" ? valueSqInches / 144 : valueSqInches;
   return `${converted.toFixed(state.outputUnit === "ft" ? 2 : 1)} ${areaLabel(state.outputUnit)}`;
+}
+
+function formatAngle(value) {
+  if (value === 0) return "0° center";
+  return `${Math.abs(value)}° ${value < 0 ? "left" : "right"}`;
 }
 
 function gcd(a, b) {
@@ -377,6 +378,24 @@ function lockedShapeFromDrag(point) {
   return rectangleFromBounds(opposite.x, opposite.y, dragged.x, dragged.y);
 }
 
+function lockedRectangleFromCornerDrag(point, preserveAspect = false) {
+  if (!state.dragging) return null;
+  const source = state.dragging.kind === "paper" ? state.dragging.startPaper : state.dragging.startTarget;
+  const index = state.dragging.index;
+  const opposite = source[(index + 2) % 4];
+  let dx = point.x - opposite.x;
+  let dy = point.y - opposite.y;
+
+  if (preserveAspect) {
+    const aspect = Math.max(0.05, state.paperHeight / state.paperWidth);
+    const width = Math.max(Math.abs(dx), Math.abs(dy) / aspect);
+    dx = Math.sign(dx || 1) * width;
+    dy = Math.sign(dy || 1) * width * aspect;
+  }
+
+  return rectangleFromBounds(opposite.x, opposite.y, opposite.x + dx, opposite.y + dy);
+}
+
 function lockedShapeFromEdgeDrag(point) {
   if (!state.dragging || !state.dragging.startBox) return null;
   let { minX, minY, maxX, maxY } = state.dragging.startBox;
@@ -406,6 +425,35 @@ function lockedShapeFromEdgeDrag(point) {
       maxY = minY + size;
       minX = centerX - size / 2;
       maxX = centerX + size / 2;
+    }
+  }
+
+  return rectangleFromBounds(minX, minY, maxX, maxY);
+}
+
+function lockedRectangleFromEdgeDrag(point, preserveAspect = false) {
+  if (!state.dragging || !state.dragging.startBox) return null;
+  let { minX, minY, maxX, maxY } = state.dragging.startBox;
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  if (state.dragging.edge === "left") minX = Math.min(point.x, maxX - 20);
+  if (state.dragging.edge === "right") maxX = Math.max(point.x, minX + 20);
+  if (state.dragging.edge === "top") minY = Math.min(point.y, maxY - 20);
+  if (state.dragging.edge === "bottom") maxY = Math.max(point.y, minY + 20);
+
+  if (preserveAspect) {
+    const aspect = Math.max(0.05, state.paperHeight / state.paperWidth);
+    let width = maxX - minX;
+    let height = maxY - minY;
+    if (state.dragging.edge === "left" || state.dragging.edge === "right") {
+      height = width * aspect;
+      minY = centerY - height / 2;
+      maxY = centerY + height / 2;
+    } else {
+      width = height / aspect;
+      minX = centerX - width / 2;
+      maxX = centerX + width / 2;
     }
   }
 
@@ -477,8 +525,9 @@ function makeEdgeHandle(group, edge, point) {
   rect.setAttribute("width", 52);
   rect.setAttribute("height", 26);
   rect.setAttribute("rx", 9);
-  rect.setAttribute("class", `edge-handle edge-${edge}`);
-  rect.dataset.kind = "target";
+  const kind = group === paperHandles ? "paper" : "target";
+  rect.setAttribute("class", `edge-handle ${kind}-edge-handle edge-${edge}`);
+  rect.dataset.kind = kind;
   rect.dataset.edge = edge;
   group.appendChild(rect);
 }
@@ -488,6 +537,11 @@ function renderHandles() {
   targetHandles.replaceChildren();
   state.paper.forEach((point, index) => makeHandle(paperHandles, "paper", point, index));
   state.target.forEach((point, index) => makeHandle(targetHandles, "target", point, index));
+  const paperBox = boundingBox(state.paper);
+  makeEdgeHandle(paperHandles, "top", { x: (paperBox.minX + paperBox.maxX) / 2, y: paperBox.minY });
+  makeEdgeHandle(paperHandles, "right", { x: paperBox.maxX, y: (paperBox.minY + paperBox.maxY) / 2 });
+  makeEdgeHandle(paperHandles, "bottom", { x: (paperBox.minX + paperBox.maxX) / 2, y: paperBox.maxY });
+  makeEdgeHandle(paperHandles, "left", { x: paperBox.minX, y: (paperBox.minY + paperBox.maxY) / 2 });
   if (state.shapeMode !== "free") {
     const box = boundingBox(state.target);
     makeEdgeHandle(targetHandles, "top", { x: (box.minX + box.maxX) / 2, y: box.minY });
@@ -502,7 +556,13 @@ function updateOverlayFromPointer(event) {
   const point = pointerToSvgPoint(event);
   const list = state.dragging.kind === "paper" ? state.paper : state.target;
 
-  if (state.dragging.edge && state.shapeMode !== "free") {
+  if (state.dragging.edge && state.dragging.kind === "paper") {
+    const locked = lockedRectangleFromEdgeDrag(point, true);
+    if (locked) state.paper = locked;
+  } else if (state.dragging.kind === "paper") {
+    const locked = lockedRectangleFromCornerDrag(point, true);
+    if (locked) state.paper = locked;
+  } else if (state.dragging.edge && state.shapeMode !== "free") {
     const locked = lockedShapeFromEdgeDrag(point);
     if (locked) state.target = locked;
   } else if (state.dragging.kind === "target" && state.shapeMode !== "free") {
@@ -591,12 +651,13 @@ function render() {
   confidence.textContent = confidenceState.label;
   confidence.className = `badge ${confidenceState.className}`;
   confidenceNote.textContent = confidenceState.note;
+  angleReadout.textContent = formatAngle(state.angle);
   statusLabel.textContent = state.step === "photo" ? "Take photo" : state.step === "outline" ? "Outline area" : state.step === "result" ? "Result" : "Calibrate paper";
   cameraHint.textContent = state.photoStatus || (state.step === "outline" && state.shapeMode !== "free"
     ? "Locked shape mode: drag a gold side to change width or length."
     : state.step === "outline"
     ? "Drag the gold corners around the area you want measured."
-    : "Drag the green corners onto the exact paper corners.");
+    : "Resize the green paper rectangle over the 8.5 x 11 sheet.");
   debugLine.textContent = state.photoStatus || (state.photo ? `Loaded ${state.photo}` : "No photo selected yet.");
 
   if (!measurement) {
@@ -683,8 +744,9 @@ overlay.addEventListener("pointerdown", (event) => {
     index: handle.dataset.index === undefined ? null : Number(handle.dataset.index),
     edge: handle.dataset.edge || "",
     startPoint,
+    startPaper: state.paper.map((point) => ({ ...point })),
     startTarget: state.target.map((point) => ({ ...point })),
-    startBox: boundingBox(state.target)
+    startBox: boundingBox(handle.dataset.kind === "paper" ? state.paper : state.target)
   };
   overlay.setPointerCapture(event.pointerId);
   updateOverlayFromPointer(event);

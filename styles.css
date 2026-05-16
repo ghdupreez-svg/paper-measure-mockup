@@ -219,11 +219,18 @@ button {
 }
 
 .edge-handle {
-  fill: #ffe0a4;
   stroke: #101613;
   stroke-width: 4;
   vector-effect: non-scaling-stroke;
   cursor: grab;
+}
+
+.target-edge-handle {
+  fill: #ffe0a4;
+}
+
+.paper-edge-handle {
+  fill: #9af0c7;
 }
 
 .edge-left,
@@ -511,6 +518,11 @@ label {
   gap: 7px;
   color: var(--muted);
   font-size: 12px;
+  font-weight: 800;
+}
+
+#angleReadout {
+  color: var(--green);
   font-weight: 800;
 }
 
