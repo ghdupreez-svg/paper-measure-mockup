@@ -34,6 +34,8 @@ const inputs = {
 const camera = document.getElementById("camera");
 const scene = document.getElementById("scene");
 const photoPreview = document.getElementById("photoPreview");
+const loupe = document.getElementById("loupe");
+const loupePhoto = document.getElementById("loupePhoto");
 const overlay = document.getElementById("overlay");
 const paperPoly = document.getElementById("paperPoly");
 const targetPoly = document.getElementById("targetPoly");
@@ -247,14 +249,42 @@ function updateOverlayFromPointer(event) {
   if (!state.dragging) return;
   const svgPoint = overlay.createSVGPoint();
   svgPoint.x = event.clientX;
-  svgPoint.y = event.clientY;
+  svgPoint.y = event.clientY - 72;
   const point = svgPoint.matrixTransform(overlay.getScreenCTM().inverse());
   const list = state.dragging.kind === "paper" ? state.paper : state.target;
   list[state.dragging.index] = {
     x: Math.max(0, Math.min(VIEW_SIZE, point.x)),
     y: Math.max(0, Math.min(VIEW_SIZE, point.y))
   };
+  updateLoupe(point, event);
   render();
+}
+
+function updateLoupe(point, event) {
+  const cameraRect = camera.getBoundingClientRect();
+  const scaleX = cameraRect.width / VIEW_SIZE;
+  const scaleY = cameraRect.height / VIEW_SIZE;
+  const targetX = point.x * scaleX;
+  const targetY = point.y * scaleY;
+  const loupeSize = 138;
+  const loupeX = Math.max(8, Math.min(cameraRect.width - loupeSize - 8, event.clientX - cameraRect.left - loupeSize / 2));
+  const loupeY = Math.max(8, Math.min(cameraRect.height - loupeSize - 8, targetY - loupeSize - 28));
+
+  loupe.classList.add("active");
+  loupe.style.left = `${loupeX}px`;
+  loupe.style.top = `${loupeY}px`;
+
+  if (state.photoUrl) {
+    loupePhoto.src = state.photoUrl;
+    loupePhoto.style.width = `${cameraRect.width * 2.4}px`;
+    loupePhoto.style.height = `${cameraRect.height * 2.4}px`;
+    loupePhoto.style.left = `${loupeSize / 2 - targetX * 2.4}px`;
+    loupePhoto.style.top = `${loupeSize / 2 - targetY * 2.4}px`;
+  }
+}
+
+function hideLoupe() {
+  loupe.classList.remove("active");
 }
 
 function render() {
@@ -267,8 +297,10 @@ function render() {
   if (state.photoUrl) {
     if (photoPreview.src !== state.photoUrl) photoPreview.src = state.photoUrl;
     photoPreview.alt = "Selected measurement photo";
+    if (loupePhoto.src !== state.photoUrl) loupePhoto.src = state.photoUrl;
   } else {
     photoPreview.removeAttribute("src");
+    loupePhoto.removeAttribute("src");
   }
   scene.style.setProperty("--scene-angle", `${sceneAngle}deg`);
 
@@ -382,11 +414,13 @@ overlay.addEventListener("pointermove", updateOverlayFromPointer);
 
 overlay.addEventListener("pointerup", (event) => {
   state.dragging = null;
+  hideLoupe();
   if (overlay.hasPointerCapture(event.pointerId)) overlay.releasePointerCapture(event.pointerId);
 });
 
 overlay.addEventListener("pointercancel", () => {
   state.dragging = null;
+  hideLoupe();
 });
 
 render();
