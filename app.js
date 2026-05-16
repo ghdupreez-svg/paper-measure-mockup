@@ -751,6 +751,9 @@ function render() {
   const measurement = measureTarget();
   const confidenceState = confidenceForMeasurement(measurement);
   const frame = getPhotoFrame();
+  const paperBox = boundingBox(state.paper);
+  const paperMinSide = Math.min(paperBox.maxX - paperBox.minX, paperBox.maxY - paperBox.minY);
+  const paperStroke = Math.max(3, Math.min(7, paperMinSide / 18));
 
   camera.className = `camera ${state.step}`;
   camera.classList.toggle("has-photo", Boolean(state.photoUrl));
@@ -778,6 +781,7 @@ function render() {
 
   paperPoly.setAttribute("points", pointsToString(state.paper));
   targetPoly.setAttribute("points", pointsToString(state.target));
+  paperPoly.style.strokeWidth = paperStroke;
   paperPoly.classList.toggle("locked", state.paperLocked);
   targetPoly.classList.toggle("locked", state.targetLocked);
   paperPoly.classList.toggle("selected-poly", state.selectedKind === "paper" && state.selectedIndex === null);
