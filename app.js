@@ -460,6 +460,22 @@ function lockedRectangleFromEdgeDrag(point, preserveAspect = false) {
   return rectangleFromBounds(minX, minY, maxX, maxY);
 }
 
+function movedPointsFromDrag(points) {
+  if (!state.dragging || !state.dragging.startBox) return points;
+  const point = state.dragging.currentPoint;
+  let dx = point.x - state.dragging.startPoint.x;
+  let dy = point.y - state.dragging.startPoint.y;
+  const box = state.dragging.startBox;
+
+  dx = Math.max(-box.minX, Math.min(VIEW_SIZE - box.maxX, dx));
+  dy = Math.max(-box.minY, Math.min(VIEW_SIZE - box.maxY, dy));
+
+  return points.map((start) => ({
+    x: start.x + dx,
+    y: start.y + dy
+  }));
+}
+
 function confidenceForMeasurement(measurement) {
   const paperTop = distance(state.paper[0], state.paper[1]);
   const paperRight = distance(state.paper[1], state.paper[2]);
@@ -555,8 +571,13 @@ function updateOverlayFromPointer(event) {
   if (!state.dragging) return;
   const point = pointerToSvgPoint(event);
   const list = state.dragging.kind === "paper" ? state.paper : state.target;
+  state.dragging.currentPoint = point;
 
-  if (state.dragging.edge && state.dragging.kind === "paper") {
+  if (state.dragging.mode === "move" && state.dragging.kind === "paper") {
+    state.paper = movedPointsFromDrag(state.dragging.startPaper);
+  } else if (state.dragging.mode === "move") {
+    state.target = movedPointsFromDrag(state.dragging.startTarget);
+  } else if (state.dragging.edge && state.dragging.kind === "paper") {
     const locked = lockedRectangleFromEdgeDrag(point, true);
     if (locked) state.paper = locked;
   } else if (state.dragging.kind === "paper") {
@@ -579,7 +600,7 @@ function updateOverlayFromPointer(event) {
 function pointerToSvgPoint(event) {
   const svgPoint = overlay.createSVGPoint();
   svgPoint.x = event.clientX;
-  svgPoint.y = event.clientY - 72;
+  svgPoint.y = event.clientY;
   return svgPoint.matrixTransform(overlay.getScreenCTM().inverse());
 }
 
@@ -736,17 +757,21 @@ photoPreview.addEventListener("error", () => {
 });
 
 overlay.addEventListener("pointerdown", (event) => {
-  const handle = event.target.closest(".handle, .edge-handle");
-  if (!handle) return;
+  const dragTarget = event.target.closest(".handle, .edge-handle, #targetPoly, #paperPoly");
+  if (!dragTarget) return;
   const startPoint = pointerToSvgPoint(event);
+  const isPolygon = dragTarget === targetPoly || dragTarget === paperPoly;
+  const kind = isPolygon ? (dragTarget === paperPoly ? "paper" : "target") : dragTarget.dataset.kind;
   state.dragging = {
-    kind: handle.dataset.kind,
-    index: handle.dataset.index === undefined ? null : Number(handle.dataset.index),
-    edge: handle.dataset.edge || "",
+    kind,
+    mode: isPolygon ? "move" : "resize",
+    index: dragTarget.dataset.index === undefined ? null : Number(dragTarget.dataset.index),
+    edge: dragTarget.dataset.edge || "",
     startPoint,
+    currentPoint: startPoint,
     startPaper: state.paper.map((point) => ({ ...point })),
     startTarget: state.target.map((point) => ({ ...point })),
-    startBox: boundingBox(handle.dataset.kind === "paper" ? state.paper : state.target)
+    startBox: boundingBox(kind === "paper" ? state.paper : state.target)
   };
   overlay.setPointerCapture(event.pointerId);
   updateOverlayFromPointer(event);
