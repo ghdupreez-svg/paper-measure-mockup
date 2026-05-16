@@ -22,7 +22,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -468,7 +469,8 @@ label {
   font-weight: 800;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;
@@ -476,6 +478,23 @@ input {
   border-radius: 8px;
   color: var(--ink);
   background: #fff;
+}
+
+.shape-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.shape-size-grid {
+  margin-top: 12px;
+}
+
+.secondary.active-shape {
+  border-color: var(--green);
+  background: #dff0e7;
+  color: #113d2e;
 }
 
 .result {
@@ -548,7 +567,8 @@ input {
 
   .grid,
   .action-row,
-  .photo-actions {
+  .photo-actions,
+  .shape-actions {
     grid-template-columns: 1fr;
   }
 }

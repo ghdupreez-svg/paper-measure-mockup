@@ -97,12 +97,26 @@
 
         <section class="grid">
           <label>
-            Paper width, inches
+            Paper width
             <input id="paperWidth" type="number" value="8.5" step="0.1" min="1" />
           </label>
           <label>
-            Paper height, inches
+            Paper height
             <input id="paperHeight" type="number" value="11" step="0.1" min="1" />
+          </label>
+          <label>
+            Input units
+            <select id="inputUnit">
+              <option value="in" selected>Inches</option>
+              <option value="ft">Feet</option>
+            </select>
+          </label>
+          <label>
+            Output units
+            <select id="outputUnit">
+              <option value="in">Inches</option>
+              <option value="ft" selected>Feet</option>
+            </select>
           </label>
           <label>
             Distance from wall, feet
@@ -112,6 +126,29 @@
             Camera angle note
             <input id="angle" type="range" value="24" min="-45" max="45" />
           </label>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <strong>Shape</strong>
+            <span class="badge" id="shapeBadge">Free draw</span>
+          </div>
+          <div class="shape-actions">
+            <button class="secondary" id="freeShapeButton" type="button">Free</button>
+            <button class="secondary" id="rectangleButton" type="button">Rectangle</button>
+            <button class="secondary" id="squareButton" type="button">Square</button>
+          </div>
+          <div class="grid shape-size-grid">
+            <label>
+              Shape width
+              <input id="shapeWidth" type="number" value="72" step="1" min="1" />
+            </label>
+            <label>
+              Shape height
+              <input id="shapeHeight" type="number" value="48" step="1" min="1" />
+            </label>
+          </div>
+          <p class="debug-line">Use Rectangle or Square to create a standard shape, then drag any gold corner to place it.</p>
         </section>
 
         <section class="result">

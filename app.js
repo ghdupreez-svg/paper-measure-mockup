@@ -4,6 +4,11 @@ const state = {
   step: "calibrate",
   paperWidth: 8.5,
   paperHeight: 11,
+  inputUnit: "in",
+  outputUnit: "ft",
+  shapeMode: "free",
+  shapeWidth: 72,
+  shapeHeight: 48,
   angle: 24,
   distance: 18,
   photo: "",
@@ -27,6 +32,10 @@ const state = {
 const inputs = {
   paperWidth: document.getElementById("paperWidth"),
   paperHeight: document.getElementById("paperHeight"),
+  inputUnit: document.getElementById("inputUnit"),
+  outputUnit: document.getElementById("outputUnit"),
+  shapeWidth: document.getElementById("shapeWidth"),
+  shapeHeight: document.getElementById("shapeHeight"),
   angle: document.getElementById("angle"),
   distance: document.getElementById("distance")
 };
@@ -47,12 +56,16 @@ const readoutSize = document.getElementById("readoutSize");
 const readoutArea = document.getElementById("readoutArea");
 const resultSize = document.getElementById("resultSize");
 const resultArea = document.getElementById("resultArea");
+const shapeBadge = document.getElementById("shapeBadge");
 const statusLabel = document.getElementById("statusLabel");
 const cameraHint = document.getElementById("cameraHint");
 const debugLine = document.getElementById("debugLine");
 const uploadInput = document.getElementById("uploadInput");
 const cameraInput = document.getElementById("cameraInput");
 const measureButton = document.getElementById("measureButton");
+const freeShapeButton = document.getElementById("freeShapeButton");
+const rectangleButton = document.getElementById("rectangleButton");
+const squareButton = document.getElementById("squareButton");
 const resultButton = document.getElementById("resultButton");
 const resetButton = document.getElementById("resetButton");
 const stepButtons = document.querySelectorAll("[data-step]");
@@ -81,8 +94,38 @@ function setStep(step) {
 
 function readInputs() {
   Object.keys(inputs).forEach((key) => {
-    state[key] = Number(inputs[key].value) || 0;
+    if (inputs[key].type === "number" || inputs[key].type === "range") {
+      state[key] = Number(inputs[key].value) || 0;
+    } else {
+      state[key] = inputs[key].value;
+    }
   });
+}
+
+function toInches(value, unit) {
+  return unit === "ft" ? value * 12 : value;
+}
+
+function fromInches(value, unit) {
+  return unit === "ft" ? value / 12 : value;
+}
+
+function unitLabel(unit) {
+  return unit === "ft" ? "ft" : "in";
+}
+
+function areaLabel(unit) {
+  return unit === "ft" ? "sq ft" : "sq in";
+}
+
+function formatLength(valueInches) {
+  const converted = fromInches(valueInches, state.outputUnit);
+  return `${converted.toFixed(state.outputUnit === "ft" ? 2 : 1)} ${unitLabel(state.outputUnit)}`;
+}
+
+function formatArea(valueSqInches) {
+  const converted = state.outputUnit === "ft" ? valueSqInches / 144 : valueSqInches;
+  return `${converted.toFixed(state.outputUnit === "ft" ? 2 : 1)} ${areaLabel(state.outputUnit)}`;
 }
 
 function pointsToString(points) {
@@ -132,11 +175,13 @@ function solveLinearSystem(matrix, values) {
 
 function homographyFromPaper() {
   const src = state.paper;
+  const paperWidthInches = toInches(state.paperWidth, state.inputUnit);
+  const paperHeightInches = toInches(state.paperHeight, state.inputUnit);
   const dst = [
     { x: 0, y: 0 },
-    { x: state.paperWidth, y: 0 },
-    { x: state.paperWidth, y: state.paperHeight },
-    { x: 0, y: state.paperHeight }
+    { x: paperWidthInches, y: 0 },
+    { x: paperWidthInches, y: paperHeightInches },
+    { x: 0, y: paperHeightInches }
   ];
   const matrix = [];
   const values = [];
@@ -178,6 +223,74 @@ function measureTarget() {
   const area = polygonArea(mapped);
 
   return { width, height, area, top, right, bottom, left };
+}
+
+function inverseHomographyFromPaper() {
+  const paperWidthInches = toInches(state.paperWidth, state.inputUnit);
+  const paperHeightInches = toInches(state.paperHeight, state.inputUnit);
+  const src = [
+    { x: 0, y: 0 },
+    { x: paperWidthInches, y: 0 },
+    { x: paperWidthInches, y: paperHeightInches },
+    { x: 0, y: paperHeightInches }
+  ];
+  return homographyFromFourPoints(src, state.paper);
+}
+
+function homographyFromFourPoints(src, dst) {
+  const matrix = [];
+  const values = [];
+  src.forEach((point, index) => {
+    const target = dst[index];
+    matrix.push([point.x, point.y, 1, 0, 0, 0, -target.x * point.x, -target.x * point.y]);
+    values.push(target.x);
+    matrix.push([0, 0, 0, point.x, point.y, 1, -target.y * point.x, -target.y * point.y]);
+    values.push(target.y);
+  });
+  const solution = solveLinearSystem(matrix, values);
+  return solution ? [...solution, 1] : null;
+}
+
+function setShapeMode(mode) {
+  readInputs();
+  state.shapeMode = mode;
+  if (mode === "free") {
+    render();
+    return;
+  }
+  applyStandardShape(mode);
+}
+
+function applyStandardShape(mode) {
+  const measurement = measureTarget();
+  const h = inverseHomographyFromPaper();
+  if (!h) return;
+
+  const widthInches = toInches(state.shapeWidth, state.inputUnit);
+  const heightInches = mode === "square" ? widthInches : toInches(state.shapeHeight, state.inputUnit);
+  if (mode === "square") {
+    state.shapeHeight = state.shapeWidth;
+    inputs.shapeHeight.value = state.shapeHeight;
+  }
+
+  let center = { x: 0, y: 0 };
+  if (measurement) {
+    const mapped = state.target.map((point) => applyHomography(homographyFromPaper(), point));
+    center = mapped.reduce((acc, point) => ({ x: acc.x + point.x / 4, y: acc.y + point.y / 4 }), center);
+  } else {
+    center = { x: widthInches / 2, y: heightInches / 2 };
+  }
+
+  const targetInches = [
+    { x: center.x - widthInches / 2, y: center.y - heightInches / 2 },
+    { x: center.x + widthInches / 2, y: center.y - heightInches / 2 },
+    { x: center.x + widthInches / 2, y: center.y + heightInches / 2 },
+    { x: center.x - widthInches / 2, y: center.y + heightInches / 2 }
+  ];
+
+  state.target = targetInches.map((point) => applyHomography(h, point));
+  state.step = "outline";
+  render();
 }
 
 function confidenceForMeasurement(measurement) {
@@ -314,6 +427,10 @@ function render() {
   paperPoly.setAttribute("points", pointsToString(state.paper));
   targetPoly.setAttribute("points", pointsToString(state.target));
   renderHandles();
+  shapeBadge.textContent = state.shapeMode === "free" ? "Free draw" : state.shapeMode === "square" ? "Square" : "Rectangle";
+  freeShapeButton.classList.toggle("active-shape", state.shapeMode === "free");
+  rectangleButton.classList.toggle("active-shape", state.shapeMode === "rectangle");
+  squareButton.classList.toggle("active-shape", state.shapeMode === "square");
 
   confidence.textContent = confidenceState.label;
   confidence.className = `badge ${confidenceState.className}`;
@@ -332,18 +449,23 @@ function render() {
     return;
   }
 
-  const widthFt = measurement.width / 12;
-  const heightFt = measurement.height / 12;
-  const areaSqFt = measurement.area / 144;
-  readoutSize.textContent = `${widthFt.toFixed(2)} ft x ${heightFt.toFixed(2)} ft`;
-  readoutArea.textContent = `${areaSqFt.toFixed(2)} sq ft estimated`;
-  resultSize.textContent = `${widthFt.toFixed(2)} ft wide by ${heightFt.toFixed(2)} ft high`;
-  resultArea.textContent = `${areaSqFt.toFixed(2)} square feet. Edge check: top ${measurement.top.toFixed(1)} in, right ${measurement.right.toFixed(1)} in, bottom ${measurement.bottom.toFixed(1)} in, left ${measurement.left.toFixed(1)} in.`;
+  readoutSize.textContent = `${formatLength(measurement.width)} x ${formatLength(measurement.height)}`;
+  readoutArea.textContent = `${formatArea(measurement.area)} estimated`;
+  resultSize.textContent = `${formatLength(measurement.width)} wide by ${formatLength(measurement.height)} high`;
+  resultArea.textContent = `${formatArea(measurement.area)}. Edge check: top ${formatLength(measurement.top)}, right ${formatLength(measurement.right)}, bottom ${formatLength(measurement.bottom)}, left ${formatLength(measurement.left)}.`;
 }
 
 Object.values(inputs).forEach((input) => {
   input.addEventListener("input", () => {
     readInputs();
+    if (state.shapeMode === "square" && input === inputs.shapeWidth) {
+      state.shapeHeight = state.shapeWidth;
+      inputs.shapeHeight.value = state.shapeHeight;
+    }
+    if (state.shapeMode !== "free" && (input === inputs.shapeWidth || input === inputs.shapeHeight || input === inputs.inputUnit)) {
+      applyStandardShape(state.shapeMode);
+      return;
+    }
     render();
   });
 });
@@ -353,6 +475,9 @@ stepButtons.forEach((button) => {
 });
 
 measureButton.addEventListener("click", () => setStep("outline"));
+freeShapeButton.addEventListener("click", () => setShapeMode("free"));
+rectangleButton.addEventListener("click", () => setShapeMode("rectangle"));
+squareButton.addEventListener("click", () => setShapeMode("square"));
 resultButton.addEventListener("click", () => setStep("result"));
 resetButton.addEventListener("click", resetHandles);
 
