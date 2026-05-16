@@ -298,21 +298,31 @@ button {
 .image-tools {
   position: absolute;
   z-index: 3;
-  left: 14px;
-  right: 14px;
+  left: 50%;
   bottom: 94px;
+  width: min(350px, calc(100% - 28px));
+  display: grid;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+
+.tool-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
+.lock-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .tool-chip {
-  min-height: 34px;
+  min-height: 28px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 999px;
   color: #fff;
   background: rgba(16, 22, 19, 0.68);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 
@@ -320,6 +330,22 @@ button {
   border-color: #9af0c7;
   background: rgba(154, 240, 199, 0.92);
   color: #113d2e;
+}
+
+.lock-chip {
+  background: rgba(16, 22, 19, 0.78);
+}
+
+.lock-chip.active-lock {
+  border-color: #ffe0a4;
+  background: rgba(255, 224, 164, 0.95);
+  color: #3a270e;
+}
+
+.paper-poly.locked,
+.target-poly.locked {
+  cursor: default;
+  opacity: 0.72;
 }
 
 .controls {

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Paper Measure Mockup</title>
-    <link rel="stylesheet" href="styles.css?v=no-camera-readout-1" />
+    <link rel="stylesheet" href="styles.css?v=shape-locks-1" />
   </head>
   <body>
     <main class="app">
@@ -37,9 +37,15 @@
           </div>
 
           <div class="image-tools" aria-label="Shape tools">
-            <button class="tool-chip" id="cameraFreeShapeButton" type="button">Free</button>
-            <button class="tool-chip" id="cameraRectangleButton" type="button">Rectangle</button>
-            <button class="tool-chip" id="cameraSquareButton" type="button">Square</button>
+            <div class="tool-row">
+              <button class="tool-chip" id="cameraFreeShapeButton" type="button">Free</button>
+              <button class="tool-chip" id="cameraRectangleButton" type="button">Rectangle</button>
+              <button class="tool-chip" id="cameraSquareButton" type="button">Square</button>
+            </div>
+            <div class="tool-row lock-row">
+              <button class="tool-chip lock-chip" id="paperLockButton" type="button">Paper: Unlocked</button>
+              <button class="tool-chip lock-chip" id="targetLockButton" type="button">Measure: Unlocked</button>
+            </div>
           </div>
 
         </div>
@@ -136,6 +142,6 @@
         </div>
       </section>
     </main>
-    <script src="app.js?v=no-camera-readout-1"></script>
+    <script src="app.js?v=shape-locks-1"></script>
   </body>
 </html>

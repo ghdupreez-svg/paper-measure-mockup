@@ -16,6 +16,8 @@ const state = {
   photoUrl: "",
   photoStatus: "",
   dragging: null,
+  paperLocked: false,
+  targetLocked: false,
   paper: [
     { x: 625, y: 470 },
     { x: 735, y: 455 },
@@ -62,6 +64,8 @@ const measureButton = document.getElementById("measureButton");
 const cameraFreeShapeButton = document.getElementById("cameraFreeShapeButton");
 const cameraRectangleButton = document.getElementById("cameraRectangleButton");
 const cameraSquareButton = document.getElementById("cameraSquareButton");
+const paperLockButton = document.getElementById("paperLockButton");
+const targetLockButton = document.getElementById("targetLockButton");
 const resultButton = document.getElementById("resultButton");
 const resetButton = document.getElementById("resetButton");
 const stepButtons = document.querySelectorAll("[data-step]");
@@ -547,14 +551,18 @@ function makeEdgeHandle(group, edge, point) {
 function renderHandles() {
   paperHandles.replaceChildren();
   targetHandles.replaceChildren();
-  state.paper.forEach((point, index) => makeHandle(paperHandles, "paper", point, index));
-  state.target.forEach((point, index) => makeHandle(targetHandles, "target", point, index));
-  const paperBox = boundingBox(state.paper);
-  makeEdgeHandle(paperHandles, "top", { x: (paperBox.minX + paperBox.maxX) / 2, y: paperBox.minY });
-  makeEdgeHandle(paperHandles, "right", { x: paperBox.maxX, y: (paperBox.minY + paperBox.maxY) / 2 });
-  makeEdgeHandle(paperHandles, "bottom", { x: (paperBox.minX + paperBox.maxX) / 2, y: paperBox.maxY });
-  makeEdgeHandle(paperHandles, "left", { x: paperBox.minX, y: (paperBox.minY + paperBox.maxY) / 2 });
-  if (state.shapeMode !== "free") {
+  if (!state.paperLocked) {
+    state.paper.forEach((point, index) => makeHandle(paperHandles, "paper", point, index));
+    const paperBox = boundingBox(state.paper);
+    makeEdgeHandle(paperHandles, "top", { x: (paperBox.minX + paperBox.maxX) / 2, y: paperBox.minY });
+    makeEdgeHandle(paperHandles, "right", { x: paperBox.maxX, y: (paperBox.minY + paperBox.maxY) / 2 });
+    makeEdgeHandle(paperHandles, "bottom", { x: (paperBox.minX + paperBox.maxX) / 2, y: paperBox.maxY });
+    makeEdgeHandle(paperHandles, "left", { x: paperBox.minX, y: (paperBox.minY + paperBox.maxY) / 2 });
+  }
+  if (!state.targetLocked) {
+    state.target.forEach((point, index) => makeHandle(targetHandles, "target", point, index));
+  }
+  if (!state.targetLocked && state.shapeMode !== "free") {
     const box = boundingBox(state.target);
     makeEdgeHandle(targetHandles, "top", { x: (box.minX + box.maxX) / 2, y: box.minY });
     makeEdgeHandle(targetHandles, "right", { x: box.maxX, y: (box.minY + box.maxY) / 2 });
@@ -694,10 +702,16 @@ function render() {
 
   paperPoly.setAttribute("points", pointsToString(state.paper));
   targetPoly.setAttribute("points", pointsToString(state.target));
+  paperPoly.classList.toggle("locked", state.paperLocked);
+  targetPoly.classList.toggle("locked", state.targetLocked);
   renderHandles();
   cameraFreeShapeButton.classList.toggle("active-shape", state.shapeMode === "free");
   cameraRectangleButton.classList.toggle("active-shape", state.shapeMode === "rectangle");
   cameraSquareButton.classList.toggle("active-shape", state.shapeMode === "square");
+  paperLockButton.classList.toggle("active-lock", state.paperLocked);
+  targetLockButton.classList.toggle("active-lock", state.targetLocked);
+  paperLockButton.textContent = `Paper: ${state.paperLocked ? "Locked" : "Unlocked"}`;
+  targetLockButton.textContent = `Measure: ${state.targetLocked ? "Locked" : "Unlocked"}`;
 
   confidence.textContent = confidenceState.label;
   confidence.className = `badge ${confidenceState.className}`;
@@ -730,6 +744,14 @@ measureButton.addEventListener("click", () => setStep("outline"));
 cameraFreeShapeButton.addEventListener("click", () => setShapeMode("free"));
 cameraRectangleButton.addEventListener("click", () => setShapeMode("rectangle"));
 cameraSquareButton.addEventListener("click", () => setShapeMode("square"));
+paperLockButton.addEventListener("click", () => {
+  state.paperLocked = !state.paperLocked;
+  render();
+});
+targetLockButton.addEventListener("click", () => {
+  state.targetLocked = !state.targetLocked;
+  render();
+});
 resultButton.addEventListener("click", () => setStep("result"));
 resetButton.addEventListener("click", resetHandles);
 
@@ -782,6 +804,7 @@ overlay.addEventListener("pointerdown", (event) => {
   const startPoint = pointerToSvgPoint(event);
   const isPolygon = dragTarget === targetPoly || dragTarget === paperPoly;
   const kind = isPolygon ? (dragTarget === paperPoly ? "paper" : "target") : dragTarget.dataset.kind;
+  if ((kind === "paper" && state.paperLocked) || (kind === "target" && state.targetLocked)) return;
   state.dragging = {
     kind,
     mode: isPolygon ? "move" : "resize",
